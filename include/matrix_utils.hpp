@@ -32,6 +32,21 @@ namespace imu_localizer_cpp
         private:
         T m11, m12, m13, m21, m22, m23, m31, m32, m33;
     };
+
+    template<typename T>
+    class Matrix2x2
+    {
+        public:
+        Matrix2x2(T m11_, T m12_, T m21_, T m22_):m11(m11_),m12(m12_), m21(m21_), m22(m22_){}
+
+        Matrix2x2<T> transpose()
+        {
+            return Matrix2x2<T>(m11, m21, m12, m22);
+        }
+
+        private:
+        T m11, m12, m21, m22,
+    };
 }
 
 #endif 
