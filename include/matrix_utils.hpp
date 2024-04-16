@@ -1,7 +1,7 @@
 #ifndef MATRIX_UTILS_HPP_
 #define MATRIX_UTILS_HPP_
 
-namespace imu_localizer_cpp
+namespace motiodom
 {
     template<typename T>
     struct Vector3
@@ -55,7 +55,10 @@ namespace imu_localizer_cpp
     template<typename T>
     class Matrix3x2
     {
-        Matrix3x2()
+        Matrix3x2(T m11_, T m12_, T m21_, T m22_, T m31_, T m32_):
+        m11(m11_),m12(m12_),
+        m21(m21_),m22(m22_),
+        m31(m31_),m32(m32_),
         {
             
         }

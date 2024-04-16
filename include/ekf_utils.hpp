@@ -3,7 +3,7 @@
 
 #include "matrix_utils.hpp"
 
-namespace imu_localizer_cpp
+namespace motiodom
 {
     template<typename T>
     class AccelAngularEKF
