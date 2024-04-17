@@ -49,5 +49,22 @@ namespace motiodom
         );
     }
 
-    
+    template<typename T>
+    Matrix2x3<T> transpose_3x2(Matrix3x2<T> matrix)
+    {
+        return Matrix2x3<T>(
+            matrix.m11, matrix.m21, matrix.m31,
+            matrix.m12, matrix.m22, matrix.m32
+        );
+    }
+
+    template<typename T>
+    Matrix3x2<T> transpose_2x3(Matrix2x3<T> matrix)
+    {
+        return Matrix3x2<T>(
+            matrix.m11, matrix.m21,
+            matrix.m12, matrix.m22,
+            matrix.m13, matrix.m23
+        );
+    }
 }

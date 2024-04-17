@@ -60,6 +60,9 @@ namespace motiodom
 
     template<typename T>
     Matrix2x3<T> transpose_3x2(Matrix3x2<T> matrix);
+
+    template<typename T>
+    Matrix3x2<T> transpose_2x3(Matrix2x3<T> matrix);
 }
 
 #endif 
