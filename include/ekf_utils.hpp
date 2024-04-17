@@ -11,6 +11,10 @@ namespace motiodom
         public:
         AccelAngularEKF(float delta_time);
 
+        Vector3<T> run(
+            Vector3<T> angular_velocity,
+            Vector3<T> linear_accel,
+            float delta_time);
 
         private:
         Matrix2x3<T> h();
