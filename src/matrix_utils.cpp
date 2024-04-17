@@ -10,7 +10,7 @@ namespace motiodom
 
     template<typename T>
     Matrix3x3<T>::Matrix3x3(T m11_, T m12_, T m13_, T m21_, T m22_, T m23_, T m31_, T m32_, T m33_):
-    m11(m11_),m12(m12_),m13(m13_),
+        m11(m11_),m12(m12_),m13(m13_),
         m21(m21_),m22(m22_),m23(m23_),
         m31(m31_),m32(m32_),m33(m33_){}
 
@@ -36,7 +36,7 @@ namespace motiodom
         return Matrix3x3<T>(
             matrix.m11, matrix.m21, matrix.m31,
             matrix.m12, matrix.m22, matrix.m23,
-            matrix.m13, matrix.m23, matrix.m33,
+            matrix.m13, matrix.m23, matrix.m33
         );
     }
 

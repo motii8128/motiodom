@@ -59,9 +59,19 @@ namespace motiodom
         void predict_cov(Matrix3x3<T> jacob)
         {
             auto t_jacob = transpose_3x3(jacob);
-            cov_ = 
+            auto jac_cov = multiply(jacob, cov_);
+            cov_ = multiply(jac_cov, t_jacob) + estimation_noise_;
         }
-        Vector2<T> update_residual(Vector2<T> observation);
+        Vector2<T> update_residual(Vector2<T> observation)
+        {
+            Vector2<T> result;
+            Matrix2x3<T> h = h();
+            Vector2<T> h_est = multiply(h, estimation_);
+            result.x = observation.x - h_est.x;
+            result.y = observation.y - h_est.y;
+
+            return result;
+        }
         Matrix2x2<T> update_s();
         Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s);
         void update_x(Vector2<T> residual);
