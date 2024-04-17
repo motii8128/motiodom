@@ -93,6 +93,12 @@ namespace motiodom
 
         return result;
     }
+
+    template<typename T>
+    Vector2<T> multiply(Matrix2x3<T> a, Matrix3x3<T> b)
+    {
+        
+    }
 }
 
 #endif 
