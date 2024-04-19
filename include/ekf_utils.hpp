@@ -72,10 +72,57 @@ namespace motiodom
 
             return result;
         }
-        Matrix2x2<T> update_s();
-        Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s);
-        void update_x(Vector2<T> residual);
-        void update_cov();
+        Matrix2x2<T> update_s()
+        {
+            Matrix2x2<T> converted = to_2x2(cov_);
+
+            return add_2x2_2x2(observation_noise_, converted);
+        }
+        Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s)
+        {
+            Matrix2x3<T> new_h = h();
+            auto t_h = transpose_2x3(new_h);
+            auto inv_s = inverse_2x2(s);
+
+            auto cov_t_h = multiply(cov_, t_h);
+
+            kalman_gain_ = multiply(cov_t_h, inv_s);
+        }
+        void update_x(Vector2<T> residual)
+        {
+            Vector3<T> kg_res = multiply(kalman_gain_, residual);
+
+            estimation_.x = estimation_.x + kg_res.x;
+            estimation_.y = estimation_.y + kg_res.y;
+            estimation_.z = estimation_.z + kg_res.z;
+        }
+        void update_cov()
+        {
+            Matrix3x3<T> i = Matrix3x3<T>(
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0);
+
+            Matrix2x3<T> new_h = h();
+
+            Matrix3x3<T> k_h = multiply(kalman_gain_, new_h);
+
+            Matrix3x3<T> i_k_h_;
+
+            i_k_h_.m11 = i.m11 - k_h.m11;
+            i_k_h_.m12 = i.m12 - k_h.m12;
+            i_k_h_.m13 = i.m13 - k_h.m13;
+
+            i_k_h_.m21 = i.m21 - k_h.m21;
+            i_k_h_.m22 = i.m22 - k_h.m22;
+            i_k_h_.m23 = i.m23 - k_h.m23;
+
+            i_k_h_.m31 = i.m31 - k_h.m31;
+            i_k_h_.m32 = i.m32 - k_h.m32;
+            i_k_h_.m33 = i.m33 - k_h.m33;
+
+            cov_ = multiply(i_k_h_, cov_);
+        }
 
         Vector3<T> estimation_;
         Matrix3x3<T> cov_;

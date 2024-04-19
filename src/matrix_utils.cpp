@@ -67,4 +67,15 @@ namespace motiodom
             matrix.m13, matrix.m23
         );
     }
+
+    template<typename T>
+    Matrix2x2<T> inverse_2x2(Matrix2x2<T> matrix)
+    {
+        T coef = (T)1.0 / (matrix.m11*matrix.m22 - matrix.m12*matrix.m21);
+
+        return Matrix2x2<T>(
+            matrix.m22*coef, -1.0*matrix.m21*coef,
+            -1.0*matrix.m12*coef, matrix.m11*coef
+        );
+    }
 }
