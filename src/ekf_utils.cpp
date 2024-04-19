@@ -4,7 +4,13 @@
 namespace motiodom
 {
     template<typename T>
-    void AccelAngularEKF<T>::init(float delta_time)
+    AccelAngularEKF<T> *AccelAngularEKF<T>::initialize(float delta_time)
+    {
+        return (AccelAngularEKF *)(new AccelAngularEKF(delta_time));
+    }
+
+    template<typename T>
+    AccelAngularEKF<T>::AccelAngularEKF(float delta_time)
     {
         estimation_ = Vector3<T>(0.0, 0.0, 0.0);
         estimation_noise_ = Matrix3x3<T>(

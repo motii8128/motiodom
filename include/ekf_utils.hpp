@@ -13,7 +13,8 @@ namespace motiodom
     class AccelAngularEKF
     {
         public:
-        void init(float delta_time);
+        static AccelAngularEKF *initialize(float delta_time);
+        AccelAngularEKF(float delta_time);
 
         Vector3<T> run(
             Vector3<T> angular_velocity,

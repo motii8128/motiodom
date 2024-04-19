@@ -21,7 +21,7 @@ namespace motiodom
         this->get_parameter("frame_id", frame_id_);
 
         this->declare_parameter("child_frame_id", "imu");
-        this->declare_parameter("child_frame_id", child_id_);
+        this->get_parameter("child_frame_id", child_id_);
 
         this->declare_parameter("delta_time", 10);
         this->get_parameter("delta_time", delta_time_);
@@ -44,7 +44,9 @@ namespace motiodom
             timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis6_callback, this));
         }
 
-        ekf6_->init(delta_float_);
+        ekf6_ = std::shared_ptr<motiodom::AccelAngularEKF<float>>(motiodom::AccelAngularEKF<float>::initialize(delta_float_));
+
+        RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time:%d", delta_time_);
     }
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -91,6 +93,11 @@ namespace motiodom
 
             tf_broadcaster_->sendTransform(t);
         }
+    }
+
+    void MotiOdom::axis9_callback()
+    {
+
     }
 }
 
