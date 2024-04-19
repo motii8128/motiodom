@@ -22,7 +22,7 @@ namespace motiodom
     class MotiOdom : public rclcpp::Node
     {
         public:
-        explicit MotiOdom(const rclcpp::NodeOptions & node_options);
+        explicit MotiOdom(const rclcpp::NodeOptions & node_options=rclcpp::NodeOptions());
 
         private:
         void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);

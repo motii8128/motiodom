@@ -10,31 +10,26 @@
 namespace motiodom
 {
     template<typename T>
-    class AccelAngularEKF
-    {
-        public:
-        static AccelAngularEKF *initialize(float delta_time);
-        AccelAngularEKF(float delta_time);
-
-        Vector3<T> run(
-            Vector3<T> angular_velocity,
-            Vector3<T> linear_accel,
+    Vector3<T> run_ekf6(
+        Vector3<T> angular_velocity,
+        Vector3<T> linear_accel,
             float delta_time);
 
-        private:
-        Matrix2x3<T> h()
-        {
-            return Matrix2x3<T>(
-                1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0
-            );
-        }
-        Matrix3x3<T> calc_jacob(Vector3<T> input_matrix)
-        {
-            auto cos_roll = cos(estimation_.x);
-            auto sin_roll = sin(estimation_.x);
-            auto cos_pitch = cos(estimation_.y);
-            auto sin_pitch = sin(estimation_.y);
+    template<typename T>
+    Matrix2x3<T> h()
+    {
+        return Matrix2x3<T>(
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0
+        );
+    }
+    template<typename T>
+    Matrix3x3<T> calc_jacob(Vector3<T> input_matrix, Vector3<T> estimation_)
+    {
+        auto cos_roll = cos(estimation_.x);
+        auto sin_roll = sin(estimation_.x);
+        auto cos_pitch = cos(estimation_.y);
+        auto sin_pitch = sin(estimation_.y);
 
             auto m_11 = 1.0 + input_matrix.y*((cos_roll*sin_pitch)/cos_pitch) - input_matrix.z * ((sin_roll*sin_pitch)/cos_pitch);
             auto m_12 = input_matrix.y*(sin_roll/(cos_pitch*cos_pitch))+input_matrix.z*((cos_roll/(cos_pitch*cos_pitch)));
@@ -48,23 +43,31 @@ namespace motiodom
                 m_31, m_32, 0.0
             );
         }
-        void predict_x(Vector3<T> input_matrix)
+    template<typename T>
+    Vector3<T> predict_x(Vector3<T> input_matrix, Vector3<T> estimation_)
         {
             auto cos_roll = cos(estimation_.x);
             auto sin_roll = sin(estimation_.x);
             auto cos_pitch = cos(estimation_.y);
             auto sin_pitch = sin(estimation_.y);
 
-            estimation_.x = estimation_.x + input_matrix.x + input_matrix.y*((sin_roll*sin_pitch)/cos_pitch)+input_matrix.z*((cos_roll*sin_pitch)/cos_pitch);
-            estimation_.y = estimation_.y + input_matrix.y * cos_roll - input_matrix.z*sin_roll;
-            estimation_.z = estimation_.z + input_matrix.z + input_matrix.y*(sin_roll/cos_pitch) + input_matrix.z*(cos_roll/cos_pitch);
+            Vector3<T> estimation;
+            estimation.x = estimation_.x + input_matrix.x + input_matrix.y*((sin_roll*sin_pitch)/cos_pitch)+input_matrix.z*((cos_roll*sin_pitch)/cos_pitch);
+            estimation.y = estimation_.y + input_matrix.y * cos_roll - input_matrix.z*sin_roll;
+            estimation.z = estimation_.z + input_matrix.z + input_matrix.y*(sin_roll/cos_pitch) + input_matrix.z*(cos_roll/cos_pitch);
+
+            return estimation;
         }
-        void predict_cov(Matrix3x3<T> jacob)
-        {
-            auto t_jacob = transpose_3x3(jacob);
-            auto jac_cov = multiply(jacob, cov_);
-            cov_ = multiply(jac_cov, t_jacob) + estimation_noise_;
-        }
+    template<typename T>
+    Matrix3x3<T> predict_cov(Matrix3x3<T> jacob, Matrix3x3<T> cov_)
+    {
+        auto t_jacob = transpose_3x3(jacob);
+        auto jac_cov = multiply(jacob, cov_);
+        Matrix3x3<T> cov;
+        cov = multiply(jac_cov, t_jacob) + estimation_noise_;
+
+        return cov;
+    }
         Vector2<T> update_residual(Vector2<T> observation)
         {
             Vector2<T> result;
