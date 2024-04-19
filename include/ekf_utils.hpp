@@ -3,7 +3,9 @@
 
 #include "matrix_utils.hpp"
 
+#include <numbers>
 #include <cmath>
+#include <chrono>
 
 namespace motiodom
 {
@@ -11,7 +13,7 @@ namespace motiodom
     class AccelAngularEKF
     {
         public:
-        AccelAngularEKF(float delta_time);
+        void init(float delta_time);
 
         Vector3<T> run(
             Vector3<T> angular_velocity,
@@ -78,7 +80,7 @@ namespace motiodom
 
             return add_2x2_2x2(observation_noise_, converted);
         }
-        Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s)
+        void update_kalman_gain(Matrix2x2<T> s)
         {
             Matrix2x3<T> new_h = h();
             auto t_h = transpose_2x3(new_h);
@@ -130,6 +132,66 @@ namespace motiodom
         Matrix2x2<T> observation_noise_;
         Matrix3x2<T> kalman_gain_;
     };
+
+    template<typename T>
+    Vector2<T> obs_model_6(Vector3<T> linear_accel)
+    {
+        T x_ = 0.0;
+        T y_ = 0.0;
+
+        if(linear_accel.z == 0.0)
+        {
+            if(linear_accel.y > 0.0)
+            {
+                x_ = acos(-1.0) / 2.0;
+            }
+            else
+            {
+                x_ = -1.0*acos(-1.0) / 2.0;
+            }
+        }
+        else
+        {
+            x_ = atan(linear_accel.y / linear_accel.z);
+        }
+
+        if(sqrt(linear_accel.y*linear_accel.y + linear_accel.z*linear_accel.z) == 0.0)
+        {
+            if(-1.0*linear_accel.x > 0.0)
+            {
+                y_ = acos(-1.0) / 2.0;
+            }
+            else
+            {
+                y_ = -1.0*acos(-1.0) / 2.0;
+            }
+        }
+        else
+        {
+            y_ = (-1.0*linear_accel.x) / atan(sqrt(linear_accel.y*linear_accel.y+linear_accel.z*linear_accel.z));
+        }
+
+        return Vector2<T>(
+            x_,
+            y_
+        );
+    }
+
+    template<typename T>
+    T to_radian(T degree)
+    {
+        auto pi = acos(-1.0);
+
+
+        return (degree*pi)/180.0;
+    }
+
+    std::chrono::milliseconds to_milli(int64_t time)
+    {
+        auto milli = std::chrono::milliseconds(time);
+
+        return milli;
+    }
 }
 
 #endif

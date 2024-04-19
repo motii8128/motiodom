@@ -13,7 +13,7 @@ target_include_directories(target_motiodom
 )
 
 rclcpp_components_register_node(target_motiodom
-  PLUGIN "motii_posture_estimater::MotiiPostureEstimater"
+  PLUGIN "motiodom::MotiOdom"
   EXECUTABLE motiodom_node
 )
 
