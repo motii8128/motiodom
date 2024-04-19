@@ -185,13 +185,6 @@ namespace motiodom
 
         return (degree*pi)/180.0;
     }
-
-    std::chrono::milliseconds to_milli(int64_t time)
-    {
-        auto milli = std::chrono::milliseconds(time);
-
-        return milli;
-    }
 }
 
 #endif

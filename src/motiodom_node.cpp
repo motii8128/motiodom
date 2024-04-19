@@ -37,11 +37,11 @@ namespace motiodom
                 std::bind(&MotiOdom::magnet_callback, this, _1));
             mag_flag_ = false;
 
-            timer_ = this->create_wall_timer(to_milli(delta_time_), std::bind(&MotiOdom::axis9_callback, this));
+            timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis9_callback, this));
         }
         else
         {
-            timer_ = this->create_wall_timer(to_milli(delta_time_), std::bind(&MotiOdom::axis6_callback, this));
+            timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis6_callback, this));
         }
 
         ekf6_->init(delta_float_);
