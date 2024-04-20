@@ -91,10 +91,10 @@ namespace motiodom
     template<typename T>
     Matrix3x3<T> predict_cov(Matrix3x3<T> jacob, Matrix3x3<T> cov_, Matrix3x3<T> estimation_noise_)
     {
-        auto t_jacob = transpose_3x3(jacob);
-        auto jac_cov = multiply(jacob, cov_);
+        auto t_jacob = transpose_3x3<T>(jacob);
+        auto jac_cov = multiply<T>(jacob, cov_);
         Matrix3x3<T> cov;
-        cov = multiply(jac_cov, t_jacob) + estimation_noise_;
+        cov = multiply<T>(jac_cov, t_jacob) + estimation_noise_;
 
         return cov;
     }
@@ -103,8 +103,8 @@ namespace motiodom
     Vector2<T> update_residual(Vector2<T> observation, Vector3<T> estimation_)
     {
             Vector2<T> result;
-            Matrix2x3<T> h = h();
-            Vector2<T> h_est = multiply(h, estimation_);
+            Matrix2x3<T> h_ = h<T>();
+            Vector2<T> h_est = multiply(h_, estimation_);
             result.x = observation.x - h_est.x;
             result.y = observation.y - h_est.y;
 
@@ -114,26 +114,26 @@ namespace motiodom
     template<typename T>
     Matrix2x2<T> update_s(Matrix3x3<T> cov_, Matrix2x2<T> observation_noise_)
     {
-            Matrix2x2<T> converted = to_2x2(cov_);
+            Matrix2x2<T> converted = to_2x2<T>(cov_);
 
-            return add_2x2_2x2(observation_noise_, converted);
+            return add_2x2_2x2<T>(observation_noise_, converted);
     }
     template<typename T>
     Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s, Matrix3x3<T> cov_)
     {
-        Matrix2x3<T> new_h = h();
-        auto t_h = transpose_2x3(new_h);
-        auto inv_s = inverse_2x2(s);
+        Matrix2x3<T> new_h = h<T>();
+        auto t_h = transpose_2x3<T>(new_h);
+        auto inv_s = inverse_2x2<T>(s);
 
-        auto cov_t_h = multiply(cov_, t_h);
+        auto cov_t_h = multiply<T>(cov_, t_h);
 
-        return multiply(cov_t_h, inv_s);
+        return multiply<T>(cov_t_h, inv_s);
     }
 
     template<typename T>
     Vector3<T> update_x(Vector3<T> estimation_, Matrix3x2<T> kalman_gain_, Vector2<T> residual)
     {
-        Vector3<T> kg_res = multiply(kalman_gain_, residual);
+        Vector3<T> kg_res = multiply<T>(kalman_gain_, residual);
 
         return Vector3<T>(
             estimation_.x + kg_res.x,
@@ -149,9 +149,9 @@ namespace motiodom
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0);
 
-        Matrix2x3<T> new_h = h();
+        Matrix2x3<T> new_h = h<T>();
 
-        Matrix3x3<T> k_h = multiply(kalman_gain_, new_h);
+        Matrix3x3<T> k_h = multiply<T>(kalman_gain_, new_h);
 
         Matrix3x3<T> i_k_h_;
 
@@ -167,7 +167,7 @@ namespace motiodom
         i_k_h_.m32 = i.m32 - k_h.m32;
         i_k_h_.m33 = i.m33 - k_h.m33;
 
-        return multiply(i_k_h_, cov_);
+        return multiply<T>(i_k_h_, cov_);
     }
 
 

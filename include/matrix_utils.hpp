@@ -8,7 +8,7 @@ namespace motiodom
     {
         T x, y, z;
 
-        Vector3(T x_, T y_, T z_);
+        Vector3<T>(T x_, T y_, T z_);
     };
 
     template<typename T>
@@ -16,7 +16,7 @@ namespace motiodom
     {
         T x, y;
 
-        Vector2(T x_, T y_);
+        Vector2<T>(T x_, T y_);
     };
     
 
