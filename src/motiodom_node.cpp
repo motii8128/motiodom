@@ -44,9 +44,8 @@ namespace motiodom
             timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis6_callback, this));
         }
 
-        ekf6_ = std::shared_ptr<motiodom::AccelAngularEKF<float>>(motiodom::AccelAngularEKF<float>::initialize(delta_float_));
-
-        RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time:%d", delta_time_);
+        ekf6_ = init_ekf6<float>(delta_float_);
+        RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time:%dms", delta_time_);
     }
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -76,7 +75,37 @@ namespace motiodom
                 to_radian<float>(get_imu_->angular_velocity.y),
                 to_radian<float>(get_imu_->angular_velocity.z));
 
-            auto estimation = ekf6_->run(angular_velocity, linear_accel, delta_float_);
+            auto input_matrix = Vector3<float>(
+                angular_velocity.x*delta_float_,
+                angular_velocity.y*delta_float_,
+                angular_velocity.z*delta_float_);
+
+            ekf6_.est_noise = Matrix3x3<float>(
+                0.0174*delta_float_*delta_float_, 0.0, 0.0,
+                0.0, 0.0174*delta_float_*delta_float_, 0.0,
+                0.0, 0.0, 0.0174*delta_float_*delta_float_);
+            
+            ekf6_.obs_noise = Matrix2x2<float>(
+                delta_float_*delta_float_, 0.0,
+                0.0, delta_float_*delta_float_);
+
+            auto jacob = calc_jacob(input_matrix, ekf6_.est);
+
+            ekf6_.est = predict_x(input_matrix, ekf6_.est);
+
+            ekf6_.cov = predict_cov(jacob, ekf6_.cov, ekf6_.est_noise);
+
+            auto z = obs_model_6(linear_accel);
+
+            auto residual = update_residual(z, ekf6_.est);
+
+            auto s = update_s(ekf6_.cov, ekf6_.obs_noise);
+
+            ekf6_.k_gain = update_kalman_gain(s, ekf6_.cov);
+
+            ekf6_.est = update_x(ekf6_.est, ekf6_.k_gain, residual);
+
+            ekf6_.cov = update_cov(ekf6_.k_gain, ekf6_.cov);
 
             geometry_msgs::msg::TransformStamped t;
 
@@ -85,7 +114,7 @@ namespace motiodom
             t.child_frame_id = child_id_;
 
             tf2::Quaternion q;
-            q.setRPY(estimation.x, estimation.y, estimation.z);
+            q.setRPY(ekf6_.est.x, ekf6_.est.y, ekf6_.est.z);
             t.transform.rotation.w = q.w();
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();

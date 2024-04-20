@@ -10,10 +10,40 @@
 namespace motiodom
 {
     template<typename T>
-    Vector3<T> run_ekf6(
-        Vector3<T> angular_velocity,
-        Vector3<T> linear_accel,
-            float delta_time);
+    struct AccelAngularEKF
+    {
+        Vector3<T> est;
+        Matrix3x3<T> cov;
+        Matrix3x3<T> est_noise;
+        Matrix2x2<T> obs_noise;
+        Matrix3x2<T> k_gain;
+    };
+
+    template<typename T>
+    AccelAngularEKF<T> init_ekf6(float delta_time)
+    {
+        AccelAngularEKF<T> ekf6_;
+
+        ekf6_.est = Vector3<T>(0.0, 0.0, 0.0);
+        ekf6_.cov = Matrix3x3<T>(
+                    0.0174*delta_time*delta_time, 0.0, 0.0,
+                    0.0, 0.0174*delta_time*delta_time, 0.0,
+                    0.0, 0.0, 0.0174*delta_time*delta_time);
+
+        ekf6_.est_noise = Matrix3x3<T>(
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0);
+
+        ekf6_.obs_noise = Matrix2x2<T>(
+                    0.0, 0.0,
+                    0.0, 0.0);
+
+        ekf6_.k_gain = Matrix3x2<T>(
+                    0.0, 0.0,
+                    0.0, 0.0,
+                    0.0, 0.0);
+    }
 
     template<typename T>
     Matrix2x3<T> h()
@@ -59,7 +89,7 @@ namespace motiodom
             return estimation;
         }
     template<typename T>
-    Matrix3x3<T> predict_cov(Matrix3x3<T> jacob, Matrix3x3<T> cov_)
+    Matrix3x3<T> predict_cov(Matrix3x3<T> jacob, Matrix3x3<T> cov_, Matrix3x3<T> estimation_noise_)
     {
         auto t_jacob = transpose_3x3(jacob);
         auto jac_cov = multiply(jacob, cov_);
@@ -68,8 +98,10 @@ namespace motiodom
 
         return cov;
     }
-        Vector2<T> update_residual(Vector2<T> observation)
-        {
+
+    template<typename T>    
+    Vector2<T> update_residual(Vector2<T> observation, Vector3<T> estimation_)
+    {
             Vector2<T> result;
             Matrix2x3<T> h = h();
             Vector2<T> h_est = multiply(h, estimation_);
@@ -77,65 +109,67 @@ namespace motiodom
             result.y = observation.y - h_est.y;
 
             return result;
-        }
-        Matrix2x2<T> update_s()
-        {
+    }
+
+    template<typename T>
+    Matrix2x2<T> update_s(Matrix3x3<T> cov_, Matrix2x2<T> observation_noise_)
+    {
             Matrix2x2<T> converted = to_2x2(cov_);
 
             return add_2x2_2x2(observation_noise_, converted);
-        }
-        void update_kalman_gain(Matrix2x2<T> s)
-        {
-            Matrix2x3<T> new_h = h();
-            auto t_h = transpose_2x3(new_h);
-            auto inv_s = inverse_2x2(s);
+    }
+    template<typename T>
+    Matrix3x2<T> update_kalman_gain(Matrix2x2<T> s, Matrix3x3<T> cov_)
+    {
+        Matrix2x3<T> new_h = h();
+        auto t_h = transpose_2x3(new_h);
+        auto inv_s = inverse_2x2(s);
 
-            auto cov_t_h = multiply(cov_, t_h);
+        auto cov_t_h = multiply(cov_, t_h);
 
-            kalman_gain_ = multiply(cov_t_h, inv_s);
-        }
-        void update_x(Vector2<T> residual)
-        {
-            Vector3<T> kg_res = multiply(kalman_gain_, residual);
+        return multiply(cov_t_h, inv_s);
+    }
 
-            estimation_.x = estimation_.x + kg_res.x;
-            estimation_.y = estimation_.y + kg_res.y;
-            estimation_.z = estimation_.z + kg_res.z;
-        }
-        void update_cov()
-        {
-            Matrix3x3<T> i = Matrix3x3<T>(
-                1.0, 0.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 0.0, 1.0);
+    template<typename T>
+    Vector3<T> update_x(Vector3<T> estimation_, Matrix3x2<T> kalman_gain_, Vector2<T> residual)
+    {
+        Vector3<T> kg_res = multiply(kalman_gain_, residual);
 
-            Matrix2x3<T> new_h = h();
+        return Vector3<T>(
+            estimation_.x + kg_res.x,
+            estimation_.y + kg_res.y,
+            estimation_.z + kg_res.z);
+    }
 
-            Matrix3x3<T> k_h = multiply(kalman_gain_, new_h);
+    template<typename T>
+    Matrix3x3<T> update_cov(Matrix3x2<T> kalman_gain_, Matrix3x3<T> cov_)
+    {
+        Matrix3x3<T> i = Matrix3x3<T>(
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0);
 
-            Matrix3x3<T> i_k_h_;
+        Matrix2x3<T> new_h = h();
 
-            i_k_h_.m11 = i.m11 - k_h.m11;
-            i_k_h_.m12 = i.m12 - k_h.m12;
-            i_k_h_.m13 = i.m13 - k_h.m13;
+        Matrix3x3<T> k_h = multiply(kalman_gain_, new_h);
 
-            i_k_h_.m21 = i.m21 - k_h.m21;
-            i_k_h_.m22 = i.m22 - k_h.m22;
-            i_k_h_.m23 = i.m23 - k_h.m23;
+        Matrix3x3<T> i_k_h_;
 
-            i_k_h_.m31 = i.m31 - k_h.m31;
-            i_k_h_.m32 = i.m32 - k_h.m32;
-            i_k_h_.m33 = i.m33 - k_h.m33;
+        i_k_h_.m11 = i.m11 - k_h.m11;
+        i_k_h_.m12 = i.m12 - k_h.m12;
+        i_k_h_.m13 = i.m13 - k_h.m13;
 
-            cov_ = multiply(i_k_h_, cov_);
-        }
+        i_k_h_.m21 = i.m21 - k_h.m21;
+        i_k_h_.m22 = i.m22 - k_h.m22;
+        i_k_h_.m23 = i.m23 - k_h.m23;
 
-        Vector3<T> estimation_;
-        Matrix3x3<T> cov_;
-        Matrix3x3<T> estimation_noise_;
-        Matrix2x2<T> observation_noise_;
-        Matrix3x2<T> kalman_gain_;
-    };
+        i_k_h_.m31 = i.m31 - k_h.m31;
+        i_k_h_.m32 = i.m32 - k_h.m32;
+        i_k_h_.m33 = i.m33 - k_h.m33;
+
+        return multiply(i_k_h_, cov_);
+    }
+
 
     template<typename T>
     Vector2<T> obs_model_6(Vector3<T> linear_accel)

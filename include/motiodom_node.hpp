@@ -39,7 +39,7 @@ namespace motiodom
         float delta_float_;
         std::string frame_id_, child_id_;
 
-        std::shared_ptr<AccelAngularEKF<float>> ekf6_;
+        AccelAngularEKF<float> ekf6_;
 
         sensor_msgs::msg::Imu::SharedPtr get_imu_;
         geometry_msgs::msg::Vector3::SharedPtr get_magnet_;
