@@ -113,7 +113,82 @@ namespace motiodom
 
     void MotiOdom::axis9_callback()
     {
+        if(imu_flag_ && mag_flag_)
+        {
+            auto linear_accel = Vector3(
+                get_imu_->linear_acceleration.x,
+                get_imu_->linear_acceleration.y,
+                get_imu_->linear_acceleration.z);
 
+            auto angular_velocity = Vector3(
+                to_radian<float>(get_imu_->angular_velocity.x),
+                to_radian<float>(get_imu_->angular_velocity.y),
+                to_radian<float>(get_imu_->angular_velocity.z));
+
+            auto mag = Vector3(
+                get_magnet_->x,
+                get_magnet_->y,
+                get_magnet_->z);
+
+            predict_x(ekf9_, angular_velocity);
+
+            auto obs = observation_model(linear_accel, mag);
+
+            auto a = estimation_jacob(ekf9_, angular_velocity);
+
+            auto c = Matrix3x3(
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0);
+
+            auto pre_cov = estimation_cov(ekf9_, a);
+            auto obs_cov = observation_cov(ekf9_, pre_cov, c);
+
+            kalman_gain(ekf9_, pre_cov, c, obs_cov);
+
+            update_x(ekf9_, obs);
+            update_cov(ekf9_, pre_cov);
+
+            auto input_matrix = Vector3(
+                angular_velocity.x*0.01,
+                angular_velocity.y*0.01,
+                angular_velocity.z*0.01);
+
+
+            auto jacob = calc_jacob(input_matrix, ekf6_.est);
+
+            ekf6_.est = predict_x(input_matrix, ekf6_.est);
+
+            ekf6_.cov = predict_cov(jacob, ekf6_.cov, ekf6_.est_noise);
+
+            auto z = obs_model_6(linear_accel);
+
+            auto residual = update_residual(z, ekf6_.est);
+
+            auto s = update_s(ekf6_.cov, ekf6_.obs_noise);
+
+            ekf6_.k_gain = update_kalman_gain(s, ekf6_.cov);
+
+            ekf6_.est = update_x(ekf6_.est, ekf6_.k_gain, residual);
+
+            ekf6_.cov = update_cov(ekf6_.k_gain, ekf6_.cov);
+
+            geometry_msgs::msg::TransformStamped t;
+
+            t.header.frame_id = frame_id_;
+            t.header.stamp = this->get_clock()->now();
+            t.child_frame_id = child_id_;
+
+            tf2::Quaternion q;
+            q.setRPY(ekf6_.est.x/2.0, ekf9_.est.y/2.0, ekf6_.est.z/2.0);
+
+            t.transform.rotation.w = q.w();
+            t.transform.rotation.x = q.x();
+            t.transform.rotation.y = q.y();
+            t.transform.rotation.z = q.z();
+
+            tf_broadcaster_->sendTransform(t);
+        }
     }
 }
 

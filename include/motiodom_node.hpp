@@ -11,7 +11,8 @@
 #include <chrono>
 #include <string>
 
-#include "ekf_utils.hpp"
+#include "ekf6_utils.hpp"
+#include "ekf9_utils.hpp"
 #include "matrix_utils.hpp"
 
 using std::placeholders::_1;
@@ -38,6 +39,7 @@ namespace motiodom
         std::string frame_id_, child_id_;
 
         AccelAngularEKF ekf6_;
+        AAMEKF ekf9_;
 
         sensor_msgs::msg::Imu::SharedPtr get_imu_;
         geometry_msgs::msg::Vector3::SharedPtr get_magnet_;

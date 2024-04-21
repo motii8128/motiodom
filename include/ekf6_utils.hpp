@@ -1,5 +1,5 @@
-#ifndef EKF_UTILS_HPP_
-#define EKF_UTILS_HPP_
+#ifndef EKF6_UTILS_HPP_
+#define EKF6_UTILS_HPP_
 
 #include "matrix_utils.hpp"
 
@@ -197,6 +197,7 @@ namespace motiodom
 
         return (degree*pi)/180.0;
     }
+    
 }
 
 #endif
