@@ -23,11 +23,7 @@ namespace motiodom
         this->declare_parameter("child_frame_id", "imu");
         this->get_parameter("child_frame_id", child_id_);
 
-        this->declare_parameter("delta_time", 10);
-        this->get_parameter("delta_time", delta_time_);
-
         imu_flag_ = false;
-        delta_float_ = (float)(delta_time_)/1000;
 
         if(enable_magnet_)
         {
@@ -37,15 +33,14 @@ namespace motiodom
                 std::bind(&MotiOdom::magnet_callback, this, _1));
             mag_flag_ = false;
 
-            timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis9_callback, this));
+            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::axis9_callback, this));
         }
         else
         {
-            timer_ = this->create_wall_timer(std::chrono::milliseconds(delta_time_), std::bind(&MotiOdom::axis6_callback, this));
+            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::axis6_callback, this));
         }
 
-        ekf6_ = init_ekf6<float>(delta_float_);
-        RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time:%dms", delta_time_);
+        RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time: 10ms");
     }
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -65,29 +60,21 @@ namespace motiodom
         if(imu_flag_)
         {
             
-            auto linear_accel = Vector3<float>(
+            auto linear_accel = Vector3(
                 get_imu_->linear_acceleration.x,
                 get_imu_->linear_acceleration.y,
                 get_imu_->linear_acceleration.z);
 
-            auto angular_velocity = Vector3<float>(
+            auto angular_velocity = Vector3(
                 to_radian<float>(get_imu_->angular_velocity.x),
                 to_radian<float>(get_imu_->angular_velocity.y),
                 to_radian<float>(get_imu_->angular_velocity.z));
 
-            auto input_matrix = Vector3<float>(
-                angular_velocity.x*delta_float_,
-                angular_velocity.y*delta_float_,
-                angular_velocity.z*delta_float_);
+            auto input_matrix = Vector3(
+                angular_velocity.x*0.01,
+                angular_velocity.y*0.01,
+                angular_velocity.z*0.01);
 
-            ekf6_.est_noise = Matrix3x3<float>(
-                0.0174*delta_float_*delta_float_, 0.0, 0.0,
-                0.0, 0.0174*delta_float_*delta_float_, 0.0,
-                0.0, 0.0, 0.0174*delta_float_*delta_float_);
-            
-            ekf6_.obs_noise = Matrix2x2<float>(
-                delta_float_*delta_float_, 0.0,
-                0.0, delta_float_*delta_float_);
 
             auto jacob = calc_jacob(input_matrix, ekf6_.est);
 
@@ -114,7 +101,7 @@ namespace motiodom
             t.child_frame_id = child_id_;
 
             tf2::Quaternion q;
-            q.setRPY(ekf6_.est.x, ekf6_.est.y, ekf6_.est.z);
+            q.setRPY(ekf6_.est.x/2.0, ekf6_.est.y/2.0, ekf6_.est.z/2.0);
             t.transform.rotation.w = q.w();
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();

@@ -17,6 +17,11 @@ rclcpp_components_register_node(target_motiodom
   EXECUTABLE motiodom_node
 )
 
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
 )

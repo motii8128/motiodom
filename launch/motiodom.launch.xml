@@ -6,6 +6,5 @@
         <param name="enable_position" value="false"/>
         <param name="frame_id" value="odom"/>
         <param name="child_frame_id" value="imu"/>
-        <param name="delta_time" value="10"/>
     </node>
 </launch>

@@ -35,11 +35,9 @@ namespace motiodom
         rclcpp::TimerBase::SharedPtr timer_;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
         bool enable_magnet_, imu_flag_, mag_flag_, enable_position_;
-        int delta_time_;
-        float delta_float_;
         std::string frame_id_, child_id_;
 
-        AccelAngularEKF<float> ekf6_;
+        AccelAngularEKF ekf6_;
 
         sensor_msgs::msg::Imu::SharedPtr get_imu_;
         geometry_msgs::msg::Vector3::SharedPtr get_magnet_;
