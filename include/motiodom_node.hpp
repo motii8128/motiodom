@@ -33,6 +33,7 @@ namespace motiodom
         void axis9_callback();
 
         Vector3 remove_gravity(Vector3 linear_accel, Vector3 euler, float gravity);
+        float noise_filter(float value, float alpha);
 
         rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr magnetic_field_subscriber_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;

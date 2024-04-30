@@ -226,14 +226,14 @@ namespace motiodom
             removed.y + linear_accel.y,
             removed.z - linear_accel.z);
 
-        g_removed.x = filter(g_removed.x, 0.1);
-        g_removed.y = filter(g_removed.y, 0.1);
-        g_removed.z = filter(g_removed.z, 0.1);
+        g_removed.x = noise_filter(g_removed.x, 0.1);
+        g_removed.y = noise_filter(g_removed.y, 0.1);
+        g_removed.z = noise_filter(g_removed.z, 0.1);
 
         return g_removed;
     }
 
-    float filter(float value, float alpha)
+    float MotiOdom::noise_filter(float value, float alpha)
     {
         if(abs(value) > alpha)
         {
