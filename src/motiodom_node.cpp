@@ -94,6 +94,8 @@ namespace motiodom
 
             ekf6_.cov = update_cov(ekf6_.k_gain, ekf6_.cov);
 
+            auto estimated = Vector3(ekf6_.est.x, ekf6_.est.y, ekf6_.est.z);
+
             geometry_msgs::msg::TransformStamped t;
 
             t.header.frame_id = frame_id_;
@@ -101,7 +103,7 @@ namespace motiodom
             t.child_frame_id = child_id_;
 
             tf2::Quaternion q;
-            q.setRPY(ekf6_.est.x/2.0, ekf6_.est.y/2.0, ekf6_.est.z/2.0);
+            q.setRPY(estimated.x /2.0, estimated.y/2.0, estimated.z/2.0);
             t.transform.rotation.w = q.w();
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();
@@ -173,6 +175,10 @@ namespace motiodom
 
             ekf6_.cov = update_cov(ekf6_.k_gain, ekf6_.cov);
 
+            auto estimated = Vector3(ekf6_.est.x/2.0, ekf9_.est.y/2.0, ekf6_.est.z/2.0);
+
+            auto g_removed = remove_gravity(linear_accel, estimated, 0.981);
+
             geometry_msgs::msg::TransformStamped t;
 
             t.header.frame_id = frame_id_;
@@ -180,14 +186,62 @@ namespace motiodom
             t.child_frame_id = child_id_;
 
             tf2::Quaternion q;
-            q.setRPY(ekf6_.est.x/2.0, ekf9_.est.y/2.0, ekf6_.est.z/2.0);
+            q.setRPY(estimated.x, estimated.y, estimated.z);
 
             t.transform.rotation.w = q.w();
             t.transform.rotation.x = q.x();
             t.transform.rotation.y = q.y();
             t.transform.rotation.z = q.z();
 
+            auto now_vel = Vector3(
+                (g_removed.x+prev_accel_.x)*0.01 *0.5,
+                (g_removed.y+prev_accel_.y)*0.01 *0.5,
+                (g_removed.z+prev_accel_.z)*0.01 *0.5
+            );
+
+            if(enable_position_)
+            {
+                t.transform.translation.x = (now_vel.x+prev_vel.x)*0.01*0.5;
+                t.transform.translation.y = (now_vel.y+prev_vel.y)*0.01*0.5;
+                t.transform.translation.z = (now_vel.z+prev_vel.z)*0.01*0.5;
+            }
+
             tf_broadcaster_->sendTransform(t);
+
+            prev_accel_ = g_removed;
+            prev_vel = now_vel;
+        }
+    }
+
+    Vector3 MotiOdom::remove_gravity(Vector3 linear_accel, Vector3 euler, float gravity)
+    {
+        auto rm = rotation_from_euler(euler);
+
+        auto g = Vector3(0.0, 0.0, gravity);
+
+        auto removed = multiply(rm, g);
+
+        auto g_removed = Vector3(
+            removed.x + linear_accel.x,
+            removed.y + linear_accel.y,
+            removed.z - linear_accel.z);
+
+        g_removed.x = filter(g_removed.x, 0.1);
+        g_removed.y = filter(g_removed.y, 0.1);
+        g_removed.z = filter(g_removed.z, 0.1);
+
+        return g_removed;
+    }
+
+    float filter(float value, float alpha)
+    {
+        if(abs(value) > alpha)
+        {
+            return value*1000.0;
+        }
+        else
+        {
+            return 0.0;
         }
     }
 }
