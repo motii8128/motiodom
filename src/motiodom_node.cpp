@@ -201,9 +201,9 @@ namespace motiodom
 
             if(enable_position_)
             {
-                t.transform.translation.x = (now_vel.x+prev_vel.x)*0.01*0.5;
-                t.transform.translation.y = (now_vel.y+prev_vel.y)*0.01*0.5;
-                t.transform.translation.z = (now_vel.z+prev_vel.z)*0.01*0.5;
+                t.transform.translation.x += (now_vel.x+prev_vel.x)*0.01*0.5;
+                t.transform.translation.y += (now_vel.y+prev_vel.y)*0.01*0.5;
+                // t.transform.translation.z = (now_vel.z+prev_vel.z)*0.01*0.5;
             }
 
             tf_broadcaster_->sendTransform(t);
