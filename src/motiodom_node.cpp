@@ -175,7 +175,7 @@ namespace motiodom
 
             ekf6_.cov = update_cov(ekf6_.k_gain, ekf6_.cov);
 
-            auto estimated = Vector3(ekf6_.est.x/2.0, ekf9_.est.y/2.0, ekf6_.est.z/2.0);
+            auto estimated = Vector3(ekf6_.est.x, ekf9_.est.y, ekf6_.est.z/2.0);
 
             auto g_removed = remove_gravity(linear_accel, estimated, 0.981);
 
@@ -186,7 +186,7 @@ namespace motiodom
             t.child_frame_id = child_id_;
 
             tf2::Quaternion q;
-            q.setRPY(estimated.x, estimated.y, estimated.z);
+            q.setRPY(-estimated.x, -estimated.y, estimated.z);
 
             t.transform.rotation.w = q.w();
             t.transform.rotation.x = q.x();
@@ -194,15 +194,15 @@ namespace motiodom
             t.transform.rotation.z = q.z();
 
             auto now_vel = Vector3(
-                (g_removed.x+prev_accel_.x)*0.01 *0.5,
-                (g_removed.y+prev_accel_.y)*0.01 *0.5,
-                (g_removed.z+prev_accel_.z)*0.01 *0.5
+                prev_vel.x + (g_removed.x+prev_accel_.x)*0.01 *0.5,
+                prev_vel.y + (g_removed.y+prev_accel_.y)*0.01 *0.5,
+                prev_vel.z + (g_removed.z+prev_accel_.z)*0.01 *0.5
             );
 
             if(enable_position_)
             {
-                t.transform.translation.x += (now_vel.x+prev_vel.x)*0.01*0.5;
-                t.transform.translation.y += (now_vel.y+prev_vel.y)*0.01*0.5;
+                t.transform.translation.x -= (now_vel.x+prev_vel.x)*0.01*0.5;
+                t.transform.translation.y -= (now_vel.y+prev_vel.y)*0.01*0.5;
                 // t.transform.translation.z = (now_vel.z+prev_vel.z)*0.01*0.5;
             }
 
@@ -226,9 +226,9 @@ namespace motiodom
             removed.y + linear_accel.y,
             removed.z - linear_accel.z);
 
-        g_removed.x = noise_filter(g_removed.x, 0.1);
-        g_removed.y = noise_filter(g_removed.y, 0.1);
-        g_removed.z = noise_filter(g_removed.z, 0.1);
+        g_removed.x = noise_filter(g_removed.x, 0.15);
+        g_removed.y = noise_filter(g_removed.y, 0.15);
+        g_removed.z = noise_filter(g_removed.z, 0.15);
 
         return g_removed;
     }
