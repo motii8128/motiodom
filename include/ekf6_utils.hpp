@@ -12,7 +12,8 @@ namespace motiodom
     class Axis6EKF
     {
         public:
-        Vector3 run(Vector3 input_matrix);
+        Axis6EKF();
+        Vector3 run(Vector3 input_matrix, Vector3 linear_accel);
 
         private:
         Vector3 est;
@@ -20,11 +21,7 @@ namespace motiodom
         Matrix3x3 est_noise;
         Matrix2x2 obs_noise;
         Matrix3x2 k_gain;
-
-        Axis6EKF(float delta_time = 0.01);
-        
     };
-
 
     Matrix2x3 h();
     

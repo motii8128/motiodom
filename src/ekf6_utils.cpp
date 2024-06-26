@@ -2,18 +2,41 @@
 
 namespace motiodom
 {
-    Axis6EKF::Axis6EKF(float delta_time = 0.01):
+    Axis6EKF::Axis6EKF():
         est(Vector3(0.0, 0.0, 0.0)), 
         cov(Matrix3x3(
-            0.0174*delta_time*delta_time, 0.0, 0.0,
-            0.0, 0.0174*delta_time*delta_time, 0.0,
-            0.0, 0.0, 0.0174*delta_time*delta_time)),
+            0.0174*0.01*0.01, 0.0, 0.0,
+            0.0, 0.0174*0.01*0.01, 0.0,
+            0.0, 0.0, 0.0174*0.01*0.01)),
         est_noise(Matrix3x3(
             0.0174*0.01*0.01, 0.0, 0.0, 
             0.0, 0.0174*0.01*0.01, 0.0, 
             0.0, 0.0, 0.0174*0.01*0.01)),
         obs_noise(Matrix2x2(0.0, 0.0, 0.0, 0.0)),
         k_gain(Matrix3x2(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)){}
+
+    Vector3 Axis6EKF::run(Vector3 input_matrix, Vector3 linear_accel)
+    {
+        auto jacob = calc_jacob(input_matrix, est);
+
+        est = predict_x(input_matrix, est);
+
+        cov = predict_cov(jacob, cov, est_noise);
+
+        auto z = obs_model_6(linear_accel);
+
+        auto residual = update_residual(z, est);
+
+        auto s = update_s(cov, obs_noise);
+
+        k_gain = update_kalman_gain(s, cov);
+
+        est = update_x(est, k_gain, residual);
+
+        cov = update_cov(k_gain, cov);
+
+        return Vector3(est.x/2.0, est.y/2.0, est.z/2.0);
+    }
 
     Matrix2x3 h()
     {
@@ -60,7 +83,7 @@ namespace motiodom
 
     Matrix3x3 predict_cov(Matrix3x3 jacob, Matrix3x3 cov_, Matrix3x3 estimation_noise_)
     {
-        auto t_jacob = transpose_(jacob);
+        auto t_jacob = transpose_matrix(jacob);
         auto jac_cov = multiply(jacob, cov_);
         Matrix3x3 cov(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         auto multied = multiply(jac_cov, t_jacob);
@@ -91,8 +114,8 @@ namespace motiodom
     Matrix3x2 update_kalman_gain(Matrix2x2 s, Matrix3x3 cov_)
     {
         Matrix2x3 new_h = h();
-        auto t_h = transpose_2x3(new_h);
-        auto inv_s = inverse_2x2(s);
+        auto t_h = transpose_matrix(new_h);
+        auto inv_s = inverse_matrix(s);
 
         auto cov_t_h = multiply(cov_, t_h);
 

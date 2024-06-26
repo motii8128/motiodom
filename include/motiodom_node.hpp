@@ -45,7 +45,7 @@ namespace motiodom
         bool enable_magnet_, imu_flag_, mag_flag_, enable_position_;
         std::string frame_id_, child_id_;
 
-        Axis6EKF ekf6_;
+        std::shared_ptr<Axis6EKF> ekf6_;
         AAMEKF ekf9_;
 
         Vector3 prev_accel_;

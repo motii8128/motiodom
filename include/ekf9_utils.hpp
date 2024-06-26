@@ -103,7 +103,7 @@ namespace motiodom
 
     Matrix3x3 estimation_cov(AAMEKF ekf, Matrix3x3 est_jacob)
     {
-        auto t_jacob = transpose_3x3(est_jacob);
+        auto t_jacob = transpose_matrix(est_jacob);
 
         auto j_cov = multiply(est_jacob, ekf.cov);
 
@@ -114,7 +114,7 @@ namespace motiodom
 
     Matrix3x3 observation_cov(AAMEKF ekf, Matrix3x3 est_cov, Matrix3x3 obs_jacob)
     {
-        auto t_jacob = transpose_3x3(obs_jacob);
+        auto t_jacob = transpose_matrix(obs_jacob);
 
         auto j_ecov = multiply(obs_jacob, est_cov);
 
@@ -125,8 +125,8 @@ namespace motiodom
 
     void kalman_gain(AAMEKF& ekf, Matrix3x3 est_cov, Matrix3x3 obs_jacob, Matrix3x3 obs_cov)
     {
-        auto inv_obs_cov = inverse_3x3(obs_cov);
-        auto t_obs_jacob = transpose_3x3(obs_jacob);
+        auto inv_obs_cov = inverse_matrix(obs_cov);
+        auto t_obs_jacob = transpose_matrix(obs_jacob);
 
         auto es_cv_t_jacob = multiply(est_cov, t_obs_jacob);
 
