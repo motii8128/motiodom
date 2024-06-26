@@ -46,7 +46,7 @@ namespace motiodom
         );
     }
 
-    Matrix3x3 calc_jacob(Vector3 input_matrix, Vector3 estimation_)
+    Matrix3x3 calc_jacob(const Vector3 input_matrix, const Vector3 estimation_)
     {
         auto cos_roll = cos(estimation_.x);
         auto sin_roll = sin(estimation_.x);
@@ -66,7 +66,7 @@ namespace motiodom
             );
     }
 
-    Vector3 predict_x(Vector3 input_matrix, Vector3& estimation_)
+    Vector3 predict_x(const Vector3 input_matrix, const Vector3 estimation_)
     {
         auto cos_roll = cos(estimation_.x);
         auto sin_roll = sin(estimation_.x);
@@ -81,7 +81,7 @@ namespace motiodom
         return estimation;
     }
 
-    Matrix3x3 predict_cov(Matrix3x3 jacob, Matrix3x3 cov_, Matrix3x3 estimation_noise_)
+    Matrix3x3 predict_cov(const Matrix3x3 jacob, const Matrix3x3 cov_, const Matrix3x3 estimation_noise_)
     {
         auto t_jacob = transpose_matrix(jacob);
         auto jac_cov = multiply(jacob, cov_);
@@ -93,7 +93,7 @@ namespace motiodom
         return cov;
     }
 
-    Vector2 update_residual(Vector2 observation, Vector3 estimation_)
+    Vector2 update_residual(const Vector2 observation, const Vector3 estimation_)
     {
             Vector2 result(0.0, 0.0);
             Matrix2x3 h_ = h();
@@ -104,14 +104,14 @@ namespace motiodom
             return result;
     }
 
-    Matrix2x2 update_s(Matrix3x3 cov_, Matrix2x2 observation_noise_)
+    Matrix2x2 update_s(const Matrix3x3 cov_, const Matrix2x2 observation_noise_)
     {
             Matrix2x2 converted = to_2x2(cov_);
 
             return add(observation_noise_, converted);
     }
 
-    Matrix3x2 update_kalman_gain(Matrix2x2 s, Matrix3x3 cov_)
+    Matrix3x2 update_kalman_gain(const Matrix2x2 s, const Matrix3x3 cov_)
     {
         Matrix2x3 new_h = h();
         auto t_h = transpose_matrix(new_h);
@@ -122,7 +122,7 @@ namespace motiodom
         return multiply(cov_t_h, inv_s);
     }
 
-    Vector3 update_x(Vector3 estimation_, Matrix3x2 kalman_gain_, Vector2 residual)
+    Vector3 update_x(const Vector3 estimation_, const Matrix3x2 kalman_gain_, const Vector2 residual)
     {
         Vector3 kg_res = multiply(kalman_gain_, residual);
 
@@ -132,7 +132,7 @@ namespace motiodom
             estimation_.z + kg_res.z);
     }
 
-    Matrix3x3 update_cov(Matrix3x2 kalman_gain_, Matrix3x3 cov_)
+    Matrix3x3 update_cov(const Matrix3x2 kalman_gain_, const Matrix3x3 cov_)
     {
         Matrix3x3 i(
             1.0, 0.0, 0.0,
@@ -152,7 +152,7 @@ namespace motiodom
         return multiply(i_k_h_, cov_);
     }
 
-    Vector2 obs_model_6(Vector3 linear_accel)
+    Vector2 obs_model_6(const Vector3 linear_accel)
     {
         float x_ = 0.0;
         float y_ = 0.0;
