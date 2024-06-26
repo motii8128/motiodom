@@ -60,7 +60,7 @@ namespace motiodom
 
     Matrix3x3 predict_cov(Matrix3x3 jacob, Matrix3x3 cov_, Matrix3x3 estimation_noise_)
     {
-        auto t_jacob = transpose_3x3(jacob);
+        auto t_jacob = transpose_(jacob);
         auto jac_cov = multiply(jacob, cov_);
         Matrix3x3 cov(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         auto multied = multiply(jac_cov, t_jacob);
@@ -170,14 +170,5 @@ namespace motiodom
             x_,
             y_
         );
-    }
-
-    template<typename T>
-    T to_radian(T degree)
-    {
-        auto pi = acos(-1.0);
-
-
-        return (degree*pi)/180.0;
     }
 }

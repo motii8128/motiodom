@@ -35,6 +35,9 @@ namespace motiodom
         Vector3 remove_gravity(Vector3 linear_accel, Vector3 euler, float gravity);
         float noise_filter(float value, float alpha);
 
+        float to_radian(float degree);
+        Matrix3x3 rotation_from_euler(Vector3 euler);
+
         rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr magnetic_field_subscriber_;
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::TimerBase::SharedPtr timer_;
@@ -42,7 +45,7 @@ namespace motiodom
         bool enable_magnet_, imu_flag_, mag_flag_, enable_position_;
         std::string frame_id_, child_id_;
 
-        AccelAngularEKF ekf6_;
+        Axis6EKF ekf6_;
         AAMEKF ekf9_;
 
         Vector3 prev_accel_;

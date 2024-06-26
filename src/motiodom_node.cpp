@@ -240,6 +240,29 @@ namespace motiodom
             return 0.0;
         }
     }
+
+    float MotiOdom::to_radian(float degree)
+    {
+        auto pi = acos(-1.0);
+
+
+        return (degree*pi)/180.0;
+    }
+
+    Matrix3x3 MotiOdom::rotation_from_euler(Vector3 euler)
+    {
+        auto sin_x = sin(euler.x);
+        auto sin_y = sin(euler.y);
+        auto sin_z = sin(euler.z);
+        auto cos_x = cos(euler.x);
+        auto cos_y = cos(euler.y);
+        auto cos_z = cos(euler.z);
+        return Matrix3x3(
+            cos_y*cos_z, -1.0*cos_y*sin_z, sin_y,
+            sin_x*sin_y*cos_z+cos_x*sin_z, -1.0*sin_x*sin_y*sin_z + cos_x*cos_z, -1.0*sin_x*cos_y,
+            -1.0*cos_x*sin_y*cos_z + sin_x*sin_z, cos_x*sin_y*sin_z + sin_x*cos_z, cos_x*cos_y
+        );
+    }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

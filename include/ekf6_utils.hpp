@@ -9,8 +9,12 @@
 
 namespace motiodom
 {
-    struct Axis6EKF
+    class Axis6EKF
     {
+        public:
+        Vector3 run(Vector3 input_matrix);
+
+        private:
         Vector3 est;
         Matrix3x3 cov;
         Matrix3x3 est_noise;
@@ -18,6 +22,7 @@ namespace motiodom
         Matrix3x2 k_gain;
 
         Axis6EKF(float delta_time = 0.01);
+        
     };
 
 
@@ -40,9 +45,6 @@ namespace motiodom
     Matrix3x3 update_cov(Matrix3x2 kalman_gain_, Matrix3x3 cov_);
 
     Vector2 obs_model_6(Vector3 linear_accel);
-
-    template<typename T>
-    T to_radian(T degree);
 }
 
 #endif
