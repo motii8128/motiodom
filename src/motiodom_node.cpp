@@ -129,7 +129,7 @@ namespace motiodom
             auto est9 =ekf9_->run_ekf9(angular_velocity, linear_accel, mag);
 
             
-            auto estimated = Vector3(est6.x/2.0, est9.y/2.0, est6.z/2.0);
+            auto estimated = Vector3(est6.x*2.0, est9.y/2.0, est6.z);
 
             auto g_removed = remove_gravity(linear_accel, estimated, 0.981);
 
