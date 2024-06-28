@@ -25,6 +25,8 @@ namespace motiodom
 
         imu_flag_ = false;
 
+        ekf6_ = std::make_shared<Axis6EKF>();
+
         if(enable_magnet_)
         {
             magnetic_field_subscriber_ = this->create_subscription<geometry_msgs::msg::Vector3>(
@@ -42,7 +44,7 @@ namespace motiodom
 
         RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time: 10ms");
 
-        ekf6_ = std::make_shared<Axis6EKF>();
+        
     }
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
