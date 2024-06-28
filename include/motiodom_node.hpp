@@ -46,7 +46,7 @@ namespace motiodom
         std::string frame_id_, child_id_;
 
         std::shared_ptr<Axis6EKF> ekf6_;
-        AAMEKF ekf9_;
+        std::shared_ptr<Axis9EKF> ekf9_;
 
         Vector3 prev_accel_;
         Vector3 prev_vel;
