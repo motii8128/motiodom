@@ -13,7 +13,7 @@ namespace motiodom
     {
         public:
         Axis6EKF();
-        Vector3 run(Vector3 input_matrix, Vector3 linear_accel);
+        Vector3 run_ekf6(Vector3 input_matrix, Vector3 linear_accel);
 
         private:
         Vector3 est;

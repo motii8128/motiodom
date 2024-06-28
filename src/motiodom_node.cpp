@@ -81,7 +81,7 @@ namespace motiodom
                 angular_velocity.z*0.01);
 
 
-            auto estimated = ekf6_->run(input_matrix, linear_accel);
+            auto estimated = ekf6_->run_ekf6(input_matrix, linear_accel);
 
             geometry_msgs::msg::TransformStamped t;
 
@@ -124,8 +124,8 @@ namespace motiodom
                 angular_velocity.y*0.01,
                 angular_velocity.z*0.01);
 
-            auto est6 = ekf6_->run(input_matrix, linear_accel);
-            auto est9 =ekf9_->run(angular_velocity, linear_accel, mag);
+            auto est6 = ekf6_->run_ekf6(input_matrix, linear_accel);
+            auto est9 =ekf9_->run_ekf9(angular_velocity, linear_accel, mag);
 
             
             auto estimated = Vector3(est6.x/2.0, est9.y/2.0, est6.z/2.0);

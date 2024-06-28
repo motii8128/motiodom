@@ -10,7 +10,7 @@ namespace motiodom
     {
         public:
         Axis9EKF();
-        Vector3 run(Vector3 angular_velocity, Vector3 linear_accel, Vector3 magnet);
+        Vector3 run_ekf9(Vector3 angular_velocity, Vector3 linear_accel, Vector3 magnet);
         
         private:
         Vector3 est;

@@ -22,7 +22,7 @@ namespace motiodom
             0.0, 0.0, 0.0,
             0.0, 0.0, 0.0)){}
 
-    Vector3 Axis9EKF::run(Vector3 angular_velocity, Vector3 linear_accel, Vector3 magnet)
+    Vector3 Axis9EKF::run_ekf9(Vector3 angular_velocity, Vector3 linear_accel, Vector3 magnet)
     {
         est = predict_x(est, angular_velocity);
 

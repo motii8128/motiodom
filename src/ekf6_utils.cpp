@@ -15,7 +15,7 @@ namespace motiodom
         obs_noise(Matrix2x2(0.0, 0.0, 0.0, 0.0)),
         k_gain(Matrix3x2(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)){}
 
-    Vector3 Axis6EKF::run(Vector3 input_matrix, Vector3 linear_accel)
+    Vector3 Axis6EKF::run_ekf6(Vector3 input_matrix, Vector3 linear_accel)
     {
         auto jacob = calc_jacob(input_matrix, est);
 
