@@ -26,6 +26,7 @@ namespace motiodom
         imu_flag_ = false;
 
         ekf6_ = std::make_shared<Axis6EKF>();
+        ekf9_ = std::make_shared<Axis9EKF>();
 
         if(enable_magnet_)
         {
