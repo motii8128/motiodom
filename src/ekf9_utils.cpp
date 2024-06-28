@@ -24,30 +24,30 @@ namespace motiodom
 
     Vector3 Axis9EKF::run_ekf9(Vector3 angular_velocity, Vector3 linear_accel, Vector3 magnet)
     {
-        est = predict_x(est, angular_velocity);
+        est = pre_x(est, angular_velocity);
 
-        auto obs = observation_model(linear_accel, magnet);
+        auto obs = obs_model(linear_accel, magnet);
 
-        auto est_jacob = estimation_jacob(est, angular_velocity);
+        auto est_jacob = esti_jacob(est, angular_velocity);
 
         auto identify = Matrix3x3(
             1.0, 0.0, 0.0,
             0.0, 1.0, 0.0,
             0.0, 0.0, 1.0);
 
-        auto pre_cov = estimation_cov(cov, est_jacob, est_noise);
+        auto pre_cov = esti_cov(cov, est_jacob, est_noise);
 
-        auto obs_cov = observation_cov(obs_noise, pre_cov, identify);
+        auto obs_cov = obse_cov(obs_noise, pre_cov, identify);
 
         k_gain = kalman_gain(pre_cov, identify, obs_cov);
 
-        est = update_x(est, obs, k_gain);
-        cov = update_cov(k_gain, pre_cov);
+        est = update__x(est, obs, k_gain);
+        cov = update__cov(k_gain, pre_cov);
 
         return est;
     }
 
-    Vector3 predict_x(Vector3 prev, Vector3 angular_velocity)
+    Vector3 pre_x(Vector3 prev, Vector3 angular_velocity)
     {
         Vector3 est;
         est.x = prev.x + (angular_velocity.x + angular_velocity.y*tan(prev.y)*sin(prev.x) + angular_velocity.z*tan(prev.y)*cos(prev.x))*0.01;
@@ -56,7 +56,7 @@ namespace motiodom
 
         return est;
     }
-    Vector3 observation_model(Vector3 linear_accel, Vector3 mag_)
+    Vector3 obs_model(Vector3 linear_accel, Vector3 mag_)
     {
         Vector3 result(0.0, 0.0, 0.0);
 
@@ -100,7 +100,7 @@ namespace motiodom
         return result;
     }
 
-    Matrix3x3 estimation_jacob(Vector3 est, Vector3 angular_velocity)
+    Matrix3x3 esti_jacob(Vector3 est, Vector3 angular_velocity)
     {
         return Matrix3x3(
             1.0 + (angular_velocity.x + angular_velocity.y*tan(est.y)*cos(est.x) - angular_velocity.z*tan(est.y*sin(est.x)))*0.01,
@@ -115,7 +115,7 @@ namespace motiodom
         );
     }
 
-    Matrix3x3 estimation_cov(Matrix3x3 cov, Matrix3x3 est_jacob, Matrix3x3 est_noise)
+    Matrix3x3 esti_cov(Matrix3x3 cov, Matrix3x3 est_jacob, Matrix3x3 est_noise)
     {
         auto t_jacob = transpose_matrix(est_jacob);
 
@@ -126,7 +126,7 @@ namespace motiodom
         return add(j_cov_t_j, est_noise);
     }
 
-    Matrix3x3 observation_cov(Matrix3x3 obs_noise, Matrix3x3 est_cov, Matrix3x3 obs_jacob)
+    Matrix3x3 obse_cov(Matrix3x3 obs_noise, Matrix3x3 est_cov, Matrix3x3 obs_jacob)
     {
         auto t_jacob = transpose_matrix(obs_jacob);
 
@@ -147,7 +147,7 @@ namespace motiodom
         return multiply(inv_obs_cov, es_cv_t_jacob);
     }
 
-    Vector3 update_x(Vector3 est, Vector3 obs, Matrix3x3 kalman_gain)
+    Vector3 update__x(Vector3 est, Vector3 obs, Matrix3x3 kalman_gain)
     {
         auto residual = substract(obs, est);
 
@@ -160,7 +160,7 @@ namespace motiodom
         return Vector3(x, y, z);
     }
 
-    Matrix3x3 update_cov(Matrix3x3 kalman_gain, Matrix3x3 est_cov)
+    Matrix3x3 update__cov(Matrix3x3 kalman_gain, Matrix3x3 est_cov)
     {
         Matrix3x3 i(
             1.0, 0.0, 0.0,

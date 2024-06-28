@@ -27,6 +27,7 @@ namespace motiodom
 
         ekf6_ = std::make_shared<Axis6EKF>();
         ekf9_ = std::make_shared<Axis9EKF>();
+        RCLCPP_INFO(this->get_logger(), "Initialized EKF");
 
         if(enable_magnet_)
         {
