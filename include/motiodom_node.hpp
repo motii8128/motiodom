@@ -33,7 +33,7 @@ namespace motiodom
         void axis9_callback();
 
         Vector3 remove_gravity(Vector3 linear_accel, Vector3 euler, float gravity);
-        float noise_filter(float value, float alpha);
+        Vector3 noise_filter(Vector3 value, float alpha);
 
         float to_radian(float degree);
         Matrix3x3 rotation_from_euler(Vector3 euler);
@@ -42,11 +42,15 @@ namespace motiodom
         rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
         rclcpp::TimerBase::SharedPtr timer_;
         std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
+        // ROS2 Parameters
         bool enable_magnet_, imu_flag_, mag_flag_, enable_position_;
         std::string frame_id_, child_id_;
 
         std::shared_ptr<Axis6EKF> ekf6_;
         std::shared_ptr<Axis9EKF> ekf9_;
+        Vector3 prev_input_;
+        Vector3 prev_output_;
 
         Vector3 prev_accel_;
         Vector3 prev_vel;

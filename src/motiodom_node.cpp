@@ -27,6 +27,8 @@ namespace motiodom
 
         ekf6_ = std::make_shared<Axis6EKF>();
         ekf9_ = std::make_shared<Axis9EKF>();
+        prev_input_ = Vector3();
+        prev_output_ = Vector3();
         RCLCPP_INFO(this->get_logger(), "Initialized EKF");
 
         if(enable_magnet_)
@@ -155,9 +157,15 @@ namespace motiodom
 
             if(enable_position_)
             {
-                t.transform.translation.x += noise_filter((now_vel.x+prev_vel.x)*0.01*0.5, 0.1);
-                t.transform.translation.y += noise_filter((now_vel.y+prev_vel.y)*0.01*0.5, 0.1);
-                // t.transform.translation.z = (now_vel.z+prev_vel.z)*0.01*0.5;
+                Vector3 calc_pos;
+                calc_pos.x = (now_vel.x + prev_vel.x)*0.01*0.5;
+                calc_pos.y = (now_vel.y + prev_vel.y)*0.01*0.5;
+                calc_pos.z = (now_vel.z + prev_vel.z)*0.01*0.5;
+
+                auto filtered = noise_filter(calc_pos, 0.3);
+                t.transform.translation.x += filtered.x;
+                t.transform.translation.y += filtered.y;
+                // t.transform.translation.z = filtered.z;
             }
 
             tf_broadcaster_->sendTransform(t);
@@ -183,16 +191,18 @@ namespace motiodom
         return g_removed;
     }
 
-    float MotiOdom::noise_filter(float value, float alpha)
+    Vector3 MotiOdom::noise_filter(Vector3 value, float alpha)
     {
-        if(abs(value) > alpha)
-        {
-            return value*1000.0;
-        }
-        else
-        {
-            return 0.0;
-        }
+        Vector3 output;
+        output.x = alpha * (prev_output_.x + value.x - prev_output_.x);
+        output.y = alpha * (prev_output_.y + value.y - prev_output_.y);
+        output.z = alpha * (prev_output_.z + value.z - prev_output_.z);
+
+        prev_output_ = output;
+        prev_input_ = value;
+
+        return output;
+
     }
 
     float MotiOdom::to_radian(float degree)

@@ -85,6 +85,7 @@ namespace motiodom
     Matrix3x3 substract(Matrix3x3 a, Matrix3x3 b);
 
     Matrix2x2 to_2x2(Matrix3x3 matrix);
+
 }
 
 #endif 
