@@ -4,10 +4,9 @@ namespace motiodom
 {
     MotiOdom::MotiOdom(const rclcpp::NodeOptions & node_options): rclcpp::Node("motiodom_node", node_options)
     {
-        rclcpp::QoS qos_settings = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
         imu_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "/imu",
-            qos_settings,
+            0,
             std::bind(&MotiOdom::imu_callback, this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -41,11 +40,11 @@ namespace motiodom
                 std::bind(&MotiOdom::magnet_callback, this, _1));
             mag_flag_ = false;
 
-            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::axis9_callback, this));
+            timer_ = this->create_wall_timer(1ms, std::bind(&MotiOdom::axis9_callback, this));
         }
         else
         {
-            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::axis6_callback, this));
+            timer_ = this->create_wall_timer(1ms, std::bind(&MotiOdom::axis6_callback, this));
         }
 
         RCLCPP_INFO(this->get_logger(), "Start MotiOdom delta_time: 10ms");
@@ -72,18 +71,18 @@ namespace motiodom
             
             auto linear_accel = Vector3(
                 get_imu_->linear_acceleration.x,
-                get_imu_->linear_acceleration.z,
-                get_imu_->linear_acceleration.y);
+                get_imu_->linear_acceleration.y,
+                get_imu_->linear_acceleration.z);
 
             auto angular_velocity = Vector3(
-                get_imu_->angular_velocity.x,
-                get_imu_->angular_velocity.z,
-                get_imu_->angular_velocity.y);
+                to_radian(get_imu_->angular_velocity.x),
+                to_radian(get_imu_->angular_velocity.y),
+                to_radian(get_imu_->angular_velocity.z));
 
             auto input_matrix = Vector3(
-                angular_velocity.x*0.01,
-                angular_velocity.y*0.01,
-                angular_velocity.z*0.01);
+                angular_velocity.x*0.001,
+                angular_velocity.y*0.001,
+                angular_velocity.z*0.001);
 
 
             auto estimated = ekf6_->run_ekf6(input_matrix, linear_accel);
