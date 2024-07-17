@@ -10,6 +10,7 @@ namespace motiodom
             std::bind(&MotiOdom::imu_callback, this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+        pose_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/pose_stamped", 0);
 
         this->declare_parameter("enable_magnet", false);
         this->get_parameter("enable_magnet", enable_magnet_);
@@ -87,6 +88,7 @@ namespace motiodom
             auto estimated = ekf6_->run_ekf6(input_matrix, linear_accel);
 
             geometry_msgs::msg::TransformStamped t;
+            geometry_msgs::msg::PoseStamped pose;
 
             t.header.frame_id = frame_id_;
             t.header.stamp = this->get_clock()->now();
@@ -100,6 +102,8 @@ namespace motiodom
             t.transform.rotation.z = q.z();
 
             tf_broadcaster_->sendTransform(t);
+            pose.pose.orientation = t.transform.rotation;
+            pose_publisher_->publish(pose);
         }
     }
 
