@@ -35,7 +35,7 @@ namespace motiodom
 
         cov = update_cov(k_gain, cov);
 
-        return Vector3(est.x/2.0, est.y/2.0, est.z/2.0);
+        return Vector3(est.x, est.y, est.z/2.0);
     }
 
     Matrix2x3 h()
