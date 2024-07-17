@@ -4,9 +4,10 @@ namespace motiodom
 {
     MotiOdom::MotiOdom(const rclcpp::NodeOptions & node_options): rclcpp::Node("motiodom_node", node_options)
     {
+        rclcpp::QoS qos_settings = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
         imu_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>(
             "/imu",
-            0,
+            qos_settings,
             std::bind(&MotiOdom::imu_callback, this, _1));
 
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -71,13 +72,13 @@ namespace motiodom
             
             auto linear_accel = Vector3(
                 get_imu_->linear_acceleration.x,
-                get_imu_->linear_acceleration.y,
-                get_imu_->linear_acceleration.z);
+                get_imu_->linear_acceleration.z,
+                get_imu_->linear_acceleration.y);
 
             auto angular_velocity = Vector3(
-                to_radian(get_imu_->angular_velocity.x),
-                to_radian(get_imu_->angular_velocity.y),
-                to_radian(get_imu_->angular_velocity.z));
+                get_imu_->angular_velocity.x,
+                get_imu_->angular_velocity.z,
+                get_imu_->angular_velocity.y);
 
             auto input_matrix = Vector3(
                 angular_velocity.x*0.01,
