@@ -17,19 +17,19 @@ include_directories(
 )
 link_directories(${YDLIDAR_SDK_LIBRARY_DIRS})
 
-ament_auto_add_library(target_motislam SHARED
+ament_auto_add_library(target_motiodom SHARED
   DIRECTORY src
 )
-target_include_directories(target_motislam
+target_include_directories(target_motiodom
   SYSTEM PUBLIC
   $<BUILD_INTERFACE:${EIGEN3_INCLUDE_DIR}
   ${YDLIDAR_SDK_LIBRARIES}
 )
-target_link_libraries(target_motislam ${YDLIDAR_SDK_LIBRARIES})
+target_link_libraries(target_motiodom ${YDLIDAR_SDK_LIBRARIES})
 
-rclcpp_components_register_node(target_motislam
-  PLUGIN "motislam::MotiSLAM"
-  EXECUTABLE motislam_node
+rclcpp_components_register_node(target_motiodom
+  PLUGIN "motiodom::MotiOdom"
+  EXECUTABLE motiodom_node
 )
 
 ament_auto_package(

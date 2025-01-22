@@ -7,6 +7,9 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <vector>
 
+#include <sensor_msgs/msg/point_cloud.hpp>
+#include <geometry_msgs/msg/point32.hpp>
+
 namespace motiodom
 {
     typedef Eigen::Vector2f Vec2;
@@ -28,6 +31,11 @@ namespace motiodom
     /// @param euler オイラー角のベクトル
     /// @return クォータニオン
     Quat euler2quat(const Vec3& euler);
+
+    /// @brief 構造体をROSのメッセージに変換する
+    /// @param input PointCloud2d型の点群
+    /// @return ROSメッセージ
+    sensor_msgs::msg::PointCloud toROSMsg(const PointCloud2d input);
 }
 
 #endif

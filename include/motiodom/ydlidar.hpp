@@ -23,6 +23,10 @@ namespace motiodom
         /// @return 実行結果（trueなら成功、falseなら失敗）
         bool startLidar();
 
+        /// @brief Lidarをシャットダウンする
+        /// @return 返り値なし
+        void closeLidar();
+
         /// @brief エラー文を取得するパッケージ
         /// @return エラー文の文字列
         const char* getError();
@@ -39,14 +43,12 @@ namespace motiodom
         /// @return ２次元点群
         PointCloud2d getScanPoints();
 
-        sensor_msgs::msg::LaserScan getROSMsg();
-
         private:
-        CYdLidar lidar_;
+        std::unique_ptr<CYdLidar> lidar_;
         std::string port_;
         int baudrate_;
         float pitch_;
-        LaserScan scan_;
+        std::unique_ptr<LaserScan> scan_;
     };
 }
 

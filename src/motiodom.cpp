@@ -11,16 +11,17 @@ namespace motiodom
             std::bind(&MotiOdom::imu_callback, this, _1)
         );
 
-        timer_ = this->create_wall_timer(100ms, std::bind(&MotiOdom::timer_callback, this));
-
         ydlidar_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud>("/lidar_scan", rclcpp::SystemDefaultsQoS());
 
         odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", rclcpp::SystemDefaultsQoS());
 
         occupancy_grid_publisher_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::SystemDefaultsQoS());
 
+        imu_posture_ = Quat(1.0, 0.0, 0.0, 0.0);
         imu_ekf_ = std::make_shared<ImuPostureEKF>();
+        RCLCPP_INFO(this->get_logger(), "Initialize YDLidarDriver");
         ydlidar_ = std::make_shared<YDLidarDriver>(230400);
+
         if(!ydlidar_->startLidar())
         {
             RCLCPP_ERROR(this->get_logger(), "Failed to initialize YD Lidar.");
@@ -29,6 +30,8 @@ namespace motiodom
         else
         {
             RCLCPP_INFO(this->get_logger(), "Initialize YD Lidar. pitch angle : %lf", ydlidar_->getPitchAngle());
+
+            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::timer_callback, this));
         }
     }
 
@@ -73,12 +76,16 @@ namespace motiodom
             odom.pose.pose.orientation.y = imu_posture_.y();
             odom.pose.pose.orientation.z = imu_posture_.z();
             const auto scanPoints = ydlidar_->getScanPoints();
+            const auto rosPointCloudMsg = toROSMsg(scanPoints);
 
             odom_publisher_->publish(odom);
+            ydlidar_publisher_->publish(rosPointCloudMsg);
         }
         else
         {
             RCLCPP_ERROR(this->get_logger(), "Failed to Scan");
+            ydlidar_->closeLidar();
+            RCLCPP_ERROR(this->get_logger(), "ShutDown YDLidar");
         }
     }
 }
