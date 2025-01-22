@@ -2,7 +2,7 @@
 
 namespace motiodom
 {
-    YDLidarDriver::YDLidarDriver(int baudrate):baudrate_(baudrate)
+    YDLidarDriver::YDLidarDriver(int baudrate, bool reverse):baudrate_(baudrate),reverse_(reverse)
     {
         ydlidar::os_init();
 
@@ -141,12 +141,17 @@ namespace motiodom
 
     PointCloud2d YDLidarDriver::getScanPoints()
     {
+        float dir = 0.0;
+        if(reverse_)dir=1.0;
+        if(!reverse_)dir=-1.0;
+
         PointCloud2d result;
          
         for(const auto &point : scan_->points)
         {
-            const auto x = point.range * std::cos(point.angle);
-            const auto y = point.range * std::sin(point.angle);
+            
+            const auto x = point.range * std::cos(dir*point.angle);
+            const auto y = point.range * std::sin(dir*point.angle);
 
             result.push_back(Vec2(x, y));
         }

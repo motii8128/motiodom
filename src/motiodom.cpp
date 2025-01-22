@@ -17,10 +17,13 @@ namespace motiodom
 
         occupancy_grid_publisher_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::SystemDefaultsQoS());
 
+        this->declare_parameter("enable_reverse", false);
+        this->get_parameter("enable_reverse", enable_reverse_);
+
         imu_posture_ = Quat(1.0, 0.0, 0.0, 0.0);
         imu_ekf_ = std::make_shared<ImuPostureEKF>();
         RCLCPP_INFO(this->get_logger(), "Initialize YDLidarDriver");
-        ydlidar_ = std::make_shared<YDLidarDriver>(230400);
+        ydlidar_ = std::make_shared<YDLidarDriver>(230400, enable_reverse_);
 
         if(!ydlidar_->startLidar())
         {

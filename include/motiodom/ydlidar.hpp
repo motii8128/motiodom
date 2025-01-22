@@ -17,7 +17,8 @@ namespace motiodom
         public:
         /// @brief コンストラクタ
         /// @param baudrate シリアル通信速度
-        YDLidarDriver(int baudrate=230400);
+        /// @param reverse trueでLidarを逆さまにした場合で計算を行う
+        YDLidarDriver(int baudrate=230400, bool reverse = false);
 
         /// @brief セットアップ
         /// @return 実行結果（trueなら成功、falseなら失敗）
@@ -48,6 +49,7 @@ namespace motiodom
         std::string port_;
         int baudrate_;
         float pitch_;
+        bool reverse_;
         std::unique_ptr<LaserScan> scan_;
     };
 }

@@ -36,6 +36,7 @@ namespace motiodom
         std::shared_ptr<ImuPostureEKF> imu_ekf_;
         std::shared_ptr<YDLidarDriver> ydlidar_;
         Quat imu_posture_;
+        bool enable_reverse_;
     };
 }
 
