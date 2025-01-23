@@ -17,13 +17,29 @@ namespace motiodom
 
         occupancy_grid_publisher_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::SystemDefaultsQoS());
 
+
+        RCLCPP_INFO(this->get_logger(), "Get Parameters");
         this->declare_parameter("enable_reverse", false);
         this->get_parameter("enable_reverse", enable_reverse_);
+        this->declare_parameter("icp_max_iter", 10);
+        this->get_parameter("icp_max_iter", icp_max_iter_);
+        this->declare_parameter("icp_threshold", 0.01);
+        this->get_parameter("icp_threshold", icp_threshold_);
 
         imu_posture_ = Quat(1.0, 0.0, 0.0, 0.0);
+        imu_posture_euler_ = Vec3(0.0, 0.0, 0.0);
+        set_source_ = false;
+
+
+        RCLCPP_INFO(this->get_logger(), "Initialize IMU EKF.");
         imu_ekf_ = std::make_shared<ImuPostureEKF>();
+
+        RCLCPP_INFO(this->get_logger(), "Initialize PointCloud ICP");
+        icp_ = std::make_shared<ICP>(icp_max_iter_, icp_threshold_);
+
         RCLCPP_INFO(this->get_logger(), "Initialize YDLidarDriver");
         ydlidar_ = std::make_shared<YDLidarDriver>(230400, enable_reverse_);
+
 
         if(!ydlidar_->startLidar())
         {
@@ -35,6 +51,7 @@ namespace motiodom
             RCLCPP_INFO(this->get_logger(), "Initialize YD Lidar. pitch angle : %lf", ydlidar_->getPitchAngle());
 
             timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::timer_callback, this));
+            RCLCPP_INFO(this->get_logger(), "Start MotiOdom!!");
         }
     }
 
@@ -62,6 +79,7 @@ namespace motiodom
             const auto posture = imu_ekf_->estimate(angular_velocity, linear_accel, dt);
 
             imu_posture_ = euler2quat(posture);
+            imu_posture_euler_ = posture;
         }
 
         prev_imu_callback_time = current_time;
@@ -80,6 +98,15 @@ namespace motiodom
             odom.pose.pose.orientation.z = imu_posture_.z();
             const auto scanPoints = ydlidar_->getScanPoints();
             const auto rosPointCloudMsg = toROSMsg(scanPoints);
+
+            if(!set_source_)
+            {
+                icp_->setSource(scanPoints);
+            }
+
+            const auto t = icp_->integrate(scanPoints, imu_posture_euler_.z()/2.0);
+            odom.pose.pose.position.x = t.x();
+            odom.pose.pose.position.y = t.y();
 
             odom_publisher_->publish(odom);
             ydlidar_publisher_->publish(rosPointCloudMsg);

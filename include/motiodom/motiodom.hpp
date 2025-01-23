@@ -4,6 +4,7 @@
 #include "types.hpp"
 #include "posture_ekf.hpp"
 #include "ydlidar.hpp"
+#include "icp.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -35,8 +36,16 @@ namespace motiodom
         rclcpp::Time prev_imu_callback_time;
         std::shared_ptr<ImuPostureEKF> imu_ekf_;
         std::shared_ptr<YDLidarDriver> ydlidar_;
+        std::shared_ptr<ICP> icp_;
         Quat imu_posture_;
+        Vec3 imu_posture_euler_;
+        bool set_source_;
+
+        // パラメーター
         bool enable_reverse_;
+        int icp_max_iter_;
+        float icp_threshold_;
+
     };
 }
 

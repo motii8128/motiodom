@@ -5,16 +5,16 @@
 
 namespace motiodom
 {
-    class ICP_SLAM
+    class ICP
     {
         public:
         /// @brief　コンストラクタ
         /// @param max_iter 最大実行回数
         /// @param threshold 許容誤差
-        ICP_SLAM(int max_iter, float threshold);
+        ICP(int max_iter=10, float threshold=0.01);
 
-        void setSource(const PointCloud2d pc);
-        void integrate(const PointCloud2d pc, const Quat posture);
+        void setSource(const PointCloud2d &pc);
+        Vec2 integrate(const PointCloud2d &pc, const float &yaw);
 
         private:
         PointCloud2d source_;
