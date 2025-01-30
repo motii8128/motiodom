@@ -20,8 +20,6 @@ namespace motiodom
     typedef Eigen::Matrix<float, 2, 3> Mat2x3;
     typedef Eigen::Quaternionf Quat;
 
-    typedef std::vector<Vec2> PointCloud2d;
-
     /// @brief 度をラジアンに変換する
     /// @param deg 度[°]
     /// @return ラジアン[rad]
@@ -31,11 +29,6 @@ namespace motiodom
     /// @param euler オイラー角のベクトル
     /// @return クォータニオン
     Quat euler2quat(const Vec3& euler);
-
-    /// @brief 構造体をROSのメッセージに変換する
-    /// @param input PointCloud2d型の点群
-    /// @return ROSメッセージ
-    sensor_msgs::msg::PointCloud toROSMsg(const PointCloud2d input);
 }
 
 #endif
