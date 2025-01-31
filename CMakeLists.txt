@@ -3,19 +3,15 @@ project(motiodom)
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(Eigen3 REQUIRED)
-find_package(ydlidar_sdk REQUIRED)
-find_package(OpenMP REQUIRED)
-if(OpenMP_FOUND)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
+find_package(PCL REQUIRED COMPONENTS common io filters)
 ament_auto_find_build_dependencies()
 
 include_directories(
   ${EIGEN3_INCLUDE_DIR}
-  ${YDLIDAR_SDK_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
-link_directories(${YDLIDAR_SDK_LIBRARY_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_add_library(target_motiodom SHARED
   DIRECTORY src
@@ -23,9 +19,7 @@ ament_auto_add_library(target_motiodom SHARED
 target_include_directories(target_motiodom
   SYSTEM PUBLIC
   $<BUILD_INTERFACE:${EIGEN3_INCLUDE_DIR}
-  ${YDLIDAR_SDK_LIBRARIES}
 )
-target_link_libraries(target_motiodom ${YDLIDAR_SDK_LIBRARIES})
 
 rclcpp_components_register_node(target_motiodom
   PLUGIN "motiodom::MotiOdom"

@@ -10,6 +10,8 @@
 #include <pcl/filters/voxel_grid.h>
 
 #include <sensor_msgs/msg/point_cloud.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <geometry_msgs/msg/point32.hpp>
 
 namespace motiodom
 {
@@ -37,30 +39,37 @@ namespace motiodom
         /// @return Vec3の移動量
         Vec3 getTranslation();
 
+        /// @brief ndtによってできたマップ点群を取得する
+        /// @return sensor_msgs/msg/PointCloud2のROS2メッセージ
+        sensor_msgs::msg::PointCloud2 getMapPointCloud();
+
         private:
         /// @brief ボクセルグリッドフィルターを使ってダウンサンプリングする
         /// @param pointcloud 入力点群
-        void dowmSampling(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud)
+        pcl::PointCloud<pcl::PointXYZ>::Ptr dowmSampling(const pcl::PointCloud<pcl::PointXYZ>::Ptr &pointcloud, float voxel_grid_leafsize)
         {
             pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
 
             pcl::VoxelGrid<pcl::PointXYZ> vg_filter;
             vg_filter.setInputCloud(pointcloud);
-            vg_filter.setLeafSize(voxel_grid_leafsize_, voxel_grid_leafsize_,voxel_grid_leafsize_);
+            vg_filter.setLeafSize(voxel_grid_leafsize, voxel_grid_leafsize,voxel_grid_leafsize);
             vg_filter.filter(*tmp);
-            *pointcloud = *tmp;
+
+            return tmp;
         }
 
-        void ros2pcl(const sensor_msgs::msg::PointCloud::SharedPtr ros_cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud)
+        pcl::PointCloud<pcl::PointXYZ>::Ptr ros2pcl(const sensor_msgs::msg::PointCloud::SharedPtr ros_cloud)
         {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr new_pcl;
+            pcl::PointCloud<pcl::PointXYZ>::Ptr new_pcl(new pcl::PointCloud<pcl::PointXYZ>);
             for(const auto & ros_p : ros_cloud->points)
             {
                 new_pcl->points.push_back(pcl::PointXYZ(ros_p.x, ros_p.y, ros_p.z));
             }
 
-            *pcl_cloud = *new_pcl;
+            return new_pcl;
         }
+
+        
 
         float voxel_grid_leafsize_;
         float eps_;
@@ -69,6 +78,7 @@ namespace motiodom
         int max_iter_;
         pcl::PointCloud<pcl::PointXYZ>::Ptr map_pointcloud_;
         pcl::PointCloud<pcl::PointXYZ>::Ptr translated_pointcloud_;
+        pcl::NormalDistributionsTransform<pcl::PointXYZ, pcl::PointXYZ>::Ptr ndt_;
         Vec3 last_pose_;
     };
 }

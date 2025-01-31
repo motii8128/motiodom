@@ -11,7 +11,13 @@ namespace motiodom
             std::bind(&MotiOdom::imu_callback, this, _1)
         );
 
-        ydlidar_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud>("/lidar_scan", rclcpp::SystemDefaultsQoS());
+        pointcloud_subscriber_ = this->create_subscription<sensor_msgs::msg::PointCloud>(
+            "/pointcloud",
+            rclcpp::SystemDefaultsQoS(),
+            std::bind(&MotiOdom::lidar_callback, this, _1)
+        );
+
+        map_cloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map_cloud", rclcpp::SystemDefaultsQoS());
 
         odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", rclcpp::SystemDefaultsQoS());
 
@@ -21,38 +27,29 @@ namespace motiodom
         RCLCPP_INFO(this->get_logger(), "Get Parameters");
         this->declare_parameter("enable_reverse", false);
         this->get_parameter("enable_reverse", enable_reverse_);
-        this->declare_parameter("icp_max_iter", 10);
-        this->get_parameter("icp_max_iter", icp_max_iter_);
-        this->declare_parameter("icp_threshold", 0.01);
-        this->get_parameter("icp_threshold", icp_threshold_);
+        this->declare_parameter("ndt_max_iter", 30);
+        this->get_parameter("ndt_max_iter", max_iter_);
+        this->declare_parameter("ndt_eps", 0.0001);
+        this->get_parameter("ndt_eps", eps_);
+        this->declare_parameter("ndt_leaf_size", 0.1);
+        this->get_parameter("ndt_leaf_size", voxel_grid_leafsize_);
+        this->declare_parameter("ndt_step_size", 0.1);
+        this->get_parameter("ndt_step_size", step_size_);
+        this->declare_parameter("ndt_resolution", 0.1);
+        this->get_parameter("ndt_resolution", resolution_);
 
         imu_posture_ = Quat(1.0, 0.0, 0.0, 0.0);
-        imu_posture_euler_ = Vec3(0.0, 0.0, 0.0);
-        set_source_ = false;
+        initialized_ndt_ = false;
 
 
         RCLCPP_INFO(this->get_logger(), "Initialize IMU EKF.");
         imu_ekf_ = std::make_shared<ImuPostureEKF>();
 
-        RCLCPP_INFO(this->get_logger(), "Initialize PointCloud ICP");
-        icp_ = std::make_shared<ICP>(icp_max_iter_, icp_threshold_);
-
-        RCLCPP_INFO(this->get_logger(), "Initialize YDLidarDriver");
-        ydlidar_ = std::make_shared<YDLidarDriver>(230400, enable_reverse_);
+        RCLCPP_INFO(this->get_logger(), "Initialize NDT");
+        ndt_ = std::make_shared<NDT>(voxel_grid_leafsize_, eps_, step_size_, resolution_, max_iter_);
 
 
-        if(!ydlidar_->startLidar())
-        {
-            RCLCPP_ERROR(this->get_logger(), "Failed to initialize YD Lidar.");
-            RCLCPP_ERROR(this->get_logger(), "LIDAR_ERROR : %s", ydlidar_->getError());
-        }
-        else
-        {
-            RCLCPP_INFO(this->get_logger(), "Initialize YD Lidar. pitch angle : %lf", ydlidar_->getPitchAngle());
-
-            timer_ = this->create_wall_timer(10ms, std::bind(&MotiOdom::timer_callback, this));
-            RCLCPP_INFO(this->get_logger(), "Start MotiOdom!!");
-        }
+        RCLCPP_INFO(this->get_logger(), "Start MotiOdom");
     }
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -79,45 +76,39 @@ namespace motiodom
             const auto posture = imu_ekf_->estimate(angular_velocity, linear_accel, dt);
 
             imu_posture_ = euler2quat(posture);
-            imu_posture_euler_ = posture;
         }
 
         prev_imu_callback_time = current_time;
     }
 
-    void MotiOdom::timer_callback()
+    void MotiOdom::lidar_callback(const sensor_msgs::msg::PointCloud::SharedPtr msg)
     {
-        if(ydlidar_->Scan())
+        auto odom = nav_msgs::msg::Odometry();
+        odom.header.frame_id = "map";
+        odom.child_frame_id = "base_link";
+        odom.pose.pose.orientation.w = imu_posture_.w();
+        odom.pose.pose.orientation.x = imu_posture_.x();
+        odom.pose.pose.orientation.y = imu_posture_.y();
+        odom.pose.pose.orientation.z = imu_posture_.z();
+           
+        if(!initialized_ndt_)
         {
-            auto odom = nav_msgs::msg::Odometry();
-            odom.header.frame_id = "map";
-            odom.child_frame_id = "base_link";
-            odom.pose.pose.orientation.w = imu_posture_.w();
-            odom.pose.pose.orientation.x = imu_posture_.x();
-            odom.pose.pose.orientation.y = imu_posture_.y();
-            odom.pose.pose.orientation.z = imu_posture_.z();
-            const auto scanPoints = ydlidar_->getScanPoints();
-            const auto rosPointCloudMsg = toROSMsg(scanPoints);
+            ndt_->initRegistraion(msg);
 
-            if(!set_source_)
-            {
-                icp_->setSource(scanPoints);
-                set_source_ = true;
-            }
-
-            const auto t = icp_->integrate(scanPoints, imu_posture_euler_.z()/2.0);
-            odom.pose.pose.position.x = t.x();
-            odom.pose.pose.position.y = t.y();
-            // RCLCPP_INFO(this->get_logger(), "x:%lf,y:%lf", t.x(), t.y());
-
-            odom_publisher_->publish(odom);
-            ydlidar_publisher_->publish(rosPointCloudMsg);
+            initialized_ndt_ = true;
         }
         else
         {
-            RCLCPP_ERROR(this->get_logger(), "Failed to Scan");
-            ydlidar_->closeLidar();
-            RCLCPP_ERROR(this->get_logger(), "ShutDown YDLidar");
+            ndt_->compute(msg, imu_posture_);
+            const auto pose = ndt_->getTranslation();
+            const auto map_pointcloud = ndt_->getMapPointCloud();
+
+            odom.pose.pose.position.x = pose.x();
+            odom.pose.pose.position.y = pose.y();
+            odom.pose.pose.position.z = pose.z();
+
+            odom_publisher_->publish(odom);
+            map_cloud_publisher_->publish(map_pointcloud);
         }
     }
 }
