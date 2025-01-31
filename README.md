@@ -1,2 +1,2 @@
 # motiodom
-Driver software for YDLidar T-mini Pro, and a ROS2 package for estimate odometry through fusion with an IMU.
+A ROS2 package for 2D Lidar and IMU localization.
