@@ -2,116 +2,132 @@
 
 namespace motiodom
 {
-    MotiOdom::MotiOdom(const rclcpp::NodeOptions& option) : Node("MotiOdom", option)
+    MotiOdom::MotiOdom(): Node("motiodom")
     {
-        rclcpp::QoS qos_settings = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
-        imu_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>(
-            "/imu",
-            qos_settings,
-            std::bind(&MotiOdom::imu_callback, this, _1)
+        const int max_iter = this->declare_parameter("icp.max_iter", 50);
+        const float tolerance_trans = this->declare_parameter("icp.translation_tolerance", 1e-4f);
+        const float tolerance_rot = this->declare_parameter("icp.rotation_tolerance", 1e-4f);
+        const float max_corr_dist = this->declare_parameter("icp.max_corr_distance", 1.0f);
+
+        frame_id_ = this->declare_parameter("frame_id", "map");
+        child_frame_id_ = this->declare_parameter("child_frame_id", "odom");
+
+        RCLCPP_INFO(this->get_logger(), "ICP Parameters\nmax iterations:%d\ntranslation_tolerance:%lf\nrotation_tolerance:%lf\nmax_corr_dist:%lf", 
+            max_iter,
+            tolerance_trans,
+            tolerance_rot,
+            max_corr_dist);
+
+        icp_ = std::make_shared<ICP2D>(max_iter, tolerance_trans, tolerance_rot, max_corr_dist);
+
+        has_prev_scan_ = false;
+        rotation_ = Mat2::Identity();
+        translation_ = Point2f::Zero();
+
+        prev_cloud_ = PointCloud2f();
+
+        pointcloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud>("/map_cloud", rclcpp::SystemDefaultsQoS());
+
+        using std::placeholders::_1;
+        scan_subscriber_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+            "/scan",
+            0,
+            std::bind(&MotiOdom::scan_callback, this, _1)
         );
 
-        pointcloud_subscriber_ = this->create_subscription<sensor_msgs::msg::PointCloud>(
-            "/pointcloud",
-            rclcpp::SystemDefaultsQoS(),
-            std::bind(&MotiOdom::lidar_callback, this, _1)
-        );
+        tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        map_cloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map_cloud", rclcpp::SystemDefaultsQoS());
-
-        odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", rclcpp::SystemDefaultsQoS());
-
-        occupancy_grid_publisher_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", rclcpp::SystemDefaultsQoS());
-
-
-        RCLCPP_INFO(this->get_logger(), "Get Parameters");
-        this->declare_parameter("enable_reverse", false);
-        this->get_parameter("enable_reverse", enable_reverse_);
-        this->declare_parameter("ndt_max_iter", 30);
-        this->get_parameter("ndt_max_iter", max_iter_);
-        this->declare_parameter("ndt_eps", 0.0001);
-        this->get_parameter("ndt_eps", eps_);
-        this->declare_parameter("ndt_leaf_size", 0.1);
-        this->get_parameter("ndt_leaf_size", voxel_grid_leafsize_);
-        this->declare_parameter("ndt_step_size", 0.1);
-        this->get_parameter("ndt_step_size", step_size_);
-        this->declare_parameter("ndt_resolution", 0.1);
-        this->get_parameter("ndt_resolution", resolution_);
-
-        imu_posture_ = Quat(1.0, 0.0, 0.0, 0.0);
-        initialized_ndt_ = false;
-
-
-        RCLCPP_INFO(this->get_logger(), "Initialize IMU EKF.");
-        imu_ekf_ = std::make_shared<ImuPostureEKF>();
-
-        RCLCPP_INFO(this->get_logger(), "Initialize NDT");
-        ndt_ = std::make_shared<NDT>(voxel_grid_leafsize_, eps_, step_size_, resolution_, max_iter_);
-
-
-        RCLCPP_INFO(this->get_logger(), "Start MotiOdom");
+        RCLCPP_INFO(this->get_logger(), "Start MotiOdom Node");
     }
 
-    void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
+    void MotiOdom::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
-        auto current_time = this->now();
+        auto current_cloud = scan_msg2eigen_points(*msg);
 
-        if(prev_imu_callback_time.nanoseconds() > 0)
+        if(!has_prev_scan_)
         {
-            rclcpp::Duration delta_time = current_time - prev_imu_callback_time;
-            auto dt = delta_time.seconds();
-
-            const auto angular_velocity = Vec3(
-                degree2radian(msg->angular_velocity.x),
-                degree2radian(msg->angular_velocity.y),
-                degree2radian(msg->angular_velocity.z)
-            );
-
-            const auto linear_accel =Vec3(
-                msg->linear_acceleration.x,
-                msg->linear_acceleration.y,
-                msg->linear_acceleration.z
-            );
-
-            const auto posture = imu_ekf_->estimate(angular_velocity, linear_accel, dt);
-
-            imu_posture_ = euler2quat(posture);
+            prev_cloud_ = current_cloud;
+            has_prev_scan_ = true;
+            return;
         }
 
-        prev_imu_callback_time = current_time;
+        auto result = icp_->align(prev_cloud_, current_cloud, rotation_, translation_);
+
+        auto map_msg = eigen2cloud_msg(prev_cloud_);
+        map_msg.header.frame_id = frame_id_;
+        map_msg.header.stamp = this->get_clock()->now();
+        pointcloud_publisher_->publish(map_msg);
+
+        RCLCPP_INFO(this->get_logger(), "ICP-Result  has_covered:%d, iter:%d", result.has_covered, result.iter);
+
+        geometry_msgs::msg::TransformStamped t;
+
+        t.header.frame_id = frame_id_;
+        t.header.stamp = this->get_clock()->now();
+        t.child_frame_id = child_frame_id_;
+
+        t.transform.translation.x = translation_.x();
+        t.transform.translation.y = translation_.y();
+        t.transform.translation.z = 0.0;
+
+        const auto yaw = std::atan2(rotation_(1,0), rotation_(0,0));
+        t.transform.rotation.x = 0.0;
+        t.transform.rotation.y = 0.0;
+        t.transform.rotation.z = std::sin(yaw*0.5);
+        t.transform.rotation.w = std::cos(yaw*0.5);
+
+        tf_broadcaster_->sendTransform(t);
+    }
+    
+    PointCloud2f scan_msg2eigen_points(const sensor_msgs::msg::LaserScan &scan)
+    {
+        PointCloud2f points;
+        points.reserve(scan.ranges.size());
+
+        float angle = scan.angle_min;
+
+        for(const auto& range: scan.ranges)
+        {
+            if(std::isfinite(range) && range >= scan.range_min && range <= scan.range_max)
+            {
+                const auto x = range * cos(angle);
+                const auto y = range * sin(angle);
+                points.emplace_back(x, y);
+            }
+            angle += scan.angle_increment;
+        }
+
+        return points;
     }
 
-    void MotiOdom::lidar_callback(const sensor_msgs::msg::PointCloud::SharedPtr msg)
+    sensor_msgs::msg::PointCloud eigen2cloud_msg(const PointCloud2f& eigen_points)
     {
-        auto odom = nav_msgs::msg::Odometry();
-        odom.header.frame_id = "map";
-        odom.child_frame_id = "base_link";
-        odom.pose.pose.orientation.w = imu_posture_.w();
-        odom.pose.pose.orientation.x = imu_posture_.x();
-        odom.pose.pose.orientation.y = imu_posture_.y();
-        odom.pose.pose.orientation.z = imu_posture_.z();
-           
-        if(!initialized_ndt_)
+        auto ros_msg = sensor_msgs::msg::PointCloud();
+
+        for(const auto& eigen_point: eigen_points)
         {
-            ndt_->initRegistraion(msg);
+            auto ros_point = geometry_msgs::msg::Point32();
 
-            initialized_ndt_ = true;
+            ros_point.x = eigen_point.x();
+            ros_point.y = eigen_point.y();
+            ros_point.z = 0.0;
+
+            ros_msg.points.push_back(ros_point);
         }
-        else
-        {
-            ndt_->compute(msg, imu_posture_);
-            const auto pose = ndt_->getTranslation();
-            const auto map_pointcloud = ndt_->getMapPointCloud();
 
-            odom.pose.pose.position.x = pose.x();
-            odom.pose.pose.position.y = pose.y();
-            odom.pose.pose.position.z = pose.z();
-
-            odom_publisher_->publish(odom);
-            map_cloud_publisher_->publish(map_pointcloud);
-        }
+        return ros_msg;
     }
 }
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(motiodom::MotiOdom)
+int main(int argc, char* argv[])
+{
+    rclcpp::init(argc, argv);
+
+    const auto node = std::make_shared<motiodom::MotiOdom>();
+
+    rclcpp::spin(node);
+
+    rclcpp::shutdown();
+
+    return 0;
+}

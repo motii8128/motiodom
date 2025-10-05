@@ -1,52 +1,44 @@
-#ifndef MOTISLAM_HPP_
-#define MOTISLAM_HPP_
+#ifndef MOTIODOM_HPP_
+#define MOTIODOM_HPP_
 
-#include "types.hpp"
-#include "posture_ekf.hpp"
-#include "pcl_ndt.hpp"
+#include "common.hpp"
+#include "icp.hpp"
+#include "ekf.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 
-#include <chrono>
-
-using std::placeholders::_1;
-using namespace std::chrono_literals;
 
 namespace motiodom
 {
     class MotiOdom : public rclcpp::Node
     {
         public:
-        explicit MotiOdom(const rclcpp::NodeOptions& option=rclcpp::NodeOptions());
+        explicit MotiOdom();
 
-        void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg);
-        void lidar_callback(const sensor_msgs::msg::PointCloud::SharedPtr msg);
+        void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 
         private:
-        rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_;
-        rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_publisher_;
-        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_cloud_publisher_;
-        rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_subscriber_;
-        rclcpp::Subscription<sensor_msgs::msg::PointCloud>::SharedPtr pointcloud_subscriber_;
-        rclcpp::Time prev_imu_callback_time;
-        std::shared_ptr<ImuPostureEKF> imu_ekf_;
-        std::shared_ptr<NDT> ndt_;
-        Quat imu_posture_;
-        bool initialized_ndt_;
+        std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+        rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_subscriber_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr pointcloud_publisher_;
 
-        // パラメーター
-        bool enable_reverse_;
-        float voxel_grid_leafsize_;
-        float eps_;
-        float step_size_;
-        float resolution_;
-        int max_iter_;
+        std::string frame_id_, child_frame_id_;
+
+        PointCloud2f prev_cloud_;
+        std::shared_ptr<ICP2D> icp_;
+        bool has_prev_scan_;
+
+        Mat2 rotation_;
+        Point2f translation_;
     };
+
+    PointCloud2f scan_msg2eigen_points(const sensor_msgs::msg::LaserScan &scan);
+
+    sensor_msgs::msg::PointCloud eigen2cloud_msg(const PointCloud2f& eigen_points);
 }
 
 #endif
