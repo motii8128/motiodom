@@ -1,9 +1,12 @@
 /**:
   ros__parameters:
     icp.max_iter: 50
-    icp.translation_tolerance: 0.001
-    icp.rotation_tolerance: 0.001
+    icp.translation_tolerance: 0.0001
+    icp.rotation_tolerance: 0.0001
     icp.max_corr_distance: 1.0
 
     frame_id: "map"
-    child_frame_id: "odom"
+    child_frame_id: "base_link"
+    lidar_frame_id: "lidar"
+
+    near_lidar_threshold: 0.5

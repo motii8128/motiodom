@@ -13,7 +13,7 @@ namespace motiodom
 
     ICPResult ICP2D::align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Point2f& t)
     {
-        auto source = current;
+        auto source = voxelGridFilter2D(current, 0.05);
         for(auto& p : source)
         {
             p = R * p + t;

@@ -11,9 +11,10 @@
 namespace motiodom
 {
     using Point2f = Eigen::Vector2f;
-    using Point3f = Eigen::Vector3f;
     using PointCloud2f = std::vector<Point2f, Eigen::aligned_allocator<Point2f>>;
     using Mat2 = Eigen::Matrix2f;
+    using Mat8 = Eigen::Matrix<float, 8, 8>;
+    using Vec8 = Eigen::Matrix<float, 8, 1>;
 
     struct PointCloudAdaptor {
         const PointCloud2f& pts;

@@ -12,24 +12,6 @@ namespace motiodom
         bool has_covered;
         int iter;
     };
-
-    struct VoxelKey 
-    {
-        int x, y;
-        bool operator==(const VoxelKey& other) const noexcept {
-            return x == other.x && y == other.y;
-        }
-    };
-
-    struct VoxelHash {
-        std::size_t operator()(const VoxelKey& key) const noexcept {
-            // シンプルなハッシュ関数（XOR+シフト）
-            std::size_t hx = std::hash<int>()(key.x);
-            std::size_t hy = std::hash<int>()(key.y);
-            return hx ^ (hy << 1);
-        }
-    };
-
     /// @brief ２次元InteractiveClosestPointを実装したクラス
     class ICP2D
     {

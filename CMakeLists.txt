@@ -4,6 +4,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(motiodom_ekf src/ekf.cpp include/motiodom/ekf.hpp)
+ament_auto_add_library(motiodom_posture_ekf src/posture_ekf.cpp include/motiodom/posture_ekf.hpp)
 ament_auto_add_library(motiodom_vgf src/voxel_grid_filter.cpp include/motiodom/voxel_grid_filter.hpp)
 ament_auto_add_library(motiodom_icp src/icp.cpp include/motiodom/icp.hpp)
 ament_auto_add_executable(motiodom src/motiodom.cpp)

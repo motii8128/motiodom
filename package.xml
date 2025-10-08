@@ -13,7 +13,6 @@
   <depend>sensor_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tf2</depend>
-  <!-- <depend>eigen</depend> -->
   <depend>tf2_eigen</depend>
   
   <test_depend>ament_lint_auto</test_depend>
