@@ -11,7 +11,7 @@ namespace motiodom
 
     }
 
-    ICPResult ICP2D::align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Point2f& t)
+    ICPResult ICP2D::align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Vec2& t)
     {
         auto source = voxelGridFilter2D(current, 0.05);
         for(auto& p : source)
@@ -87,12 +87,12 @@ namespace motiodom
         return result;
     }
 
-    void ICP2D::estimateRigidTransform(const PointCloud2f& src, const PointCloud2f& target, Mat2& R, Point2f& t)
+    void ICP2D::estimateRigidTransform(const PointCloud2f& src, const PointCloud2f& target, Mat2& R, Vec2& t)
     {
         int N = src.size();
 
-        Point2f mu_src = Point2f::Zero();
-        Point2f mu_target = Point2f::Zero();
+        Vec2 mu_src = Vec2::Zero();
+        Vec2 mu_target = Vec2::Zero();
 
         for(int i = 0; i < N; i++)
         {

@@ -3,7 +3,7 @@
 
 #include "common.hpp"
 #include "icp.hpp"
-#include "posture_ekf.hpp"
+#include "extended_kalman_filter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -46,7 +46,7 @@ namespace motiodom
         std::shared_ptr<ImuPostureEKF> imu_posture_estimater_;
 
         Mat2 rotation_;
-        Point2f translation_;
+        Vec2 translation_;
     };
 
     PointCloud2f scan_msg2eigen_points(const sensor_msgs::msg::LaserScan &scan, const geometry_msgs::msg::TransformStamped &tf_lidar_to_base, const float near_lidar_threshold);

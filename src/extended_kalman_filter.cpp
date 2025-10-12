@@ -112,11 +112,11 @@ namespace motiodom
         return new_cov;
     }
 
-    Point2f updateResidual(const Point2f &obs, const Vec3 &est)
+    Vec2 updateResidual(const Vec2 &obs, const Vec3 &est)
     {
-        Point2f result;
+        Vec2 result;
         Eigen::Matrix<float, 2, 3> h_ = h().transpose();
-        Point2f h_est = h_ * est;
+        Vec2 h_est = h_ * est;
 
         result(0) = obs.x() - h_est.x();
         result(1) = obs.y() - h_est.y();
@@ -144,7 +144,7 @@ namespace motiodom
         return cov_and_h * inverse_s;
     }
 
-    Vec3 updateX(const Vec3 &est, const Eigen::Matrix<float, 3, 2> &kalman_gain_, const Point2f &residual)
+    Vec3 updateX(const Vec3 &est, const Eigen::Matrix<float, 3, 2> &kalman_gain_, const Vec2 &residual)
     {
         Vec3 kalman_res = kalman_gain_ * residual;
 
@@ -172,9 +172,9 @@ namespace motiodom
         return i_k_h * cov;
     }
 
-    Point2f obsModel(const Vec3 &linear_accel)
+    Vec2 obsModel(const Vec3 &linear_accel)
     {
-        Point2f model;
+        Vec2 model;
 
         if(linear_accel.z() == 0.0)
         {

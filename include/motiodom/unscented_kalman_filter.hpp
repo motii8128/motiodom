@@ -11,14 +11,22 @@ namespace motiodom
         float ax, ay, gyro;
     };
 
-    class EKF
+    struct UKFConfig
+    {
+        float alpha = 1e-3;
+        float beta = 2.0;
+        float kappa = 0.0;
+    };
+
+    class UnscentedKalmanFilter
     {
         public:
-        EKF();
+        UnscentedKalmanFilter();
+        UnscentedKalmanFilter(const UKFConfig& cfg);
 
         void predict(const ImuData& imu);
 
-        void update(const float& x, const float& y, const float& yaw);
+        void update(const Vec3& obs);
 
         Vec8 get_x();
 

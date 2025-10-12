@@ -29,7 +29,7 @@ namespace motiodom
         /// @param R_out 回転(初期推定)
         /// @param t_out 変位(初期推定)
         /// @return ICPの結果（収束したか、実行回数）
-        ICPResult align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Point2f& t);
+        ICPResult align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Vec2& t);
 
         private:
         /// @brief ペアリング済みの点群から剛体変換を求める
@@ -37,7 +37,7 @@ namespace motiodom
         /// @param target 目標点群
         /// @param R 回転行列
         /// @param t 変位
-        void estimateRigidTransform(const PointCloud2f& src, const PointCloud2f& target, Mat2& R, Point2f& t);
+        void estimateRigidTransform(const PointCloud2f& src, const PointCloud2f& target, Mat2& R, Vec2& t);
 
         int max_iter_;
         float tolerance_trans_;

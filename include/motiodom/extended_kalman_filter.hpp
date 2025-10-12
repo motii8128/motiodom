@@ -5,9 +5,6 @@
 
 namespace motiodom
 {
-    using Mat3 = Eigen::Matrix3f;
-    using Vec3 = Eigen::Vector3f;
-
     class ImuPostureEKF
     {
         public:
@@ -38,17 +35,17 @@ namespace motiodom
 
     Mat3 predictCov(const Mat3 &jacob, const Mat3 &cov, const Mat3 &est_noise);
 
-    Point2f updateResidual(const Point2f &obs, const Vec3 &est);
+    Vec2 updateResidual(const Vec2 &obs, const Vec3 &est);
 
     Mat2 updateS(const Mat3 &cov_, const Mat2 &obs_noise);
 
     Eigen::Matrix<float,3,2> updateKalmanGain(const Mat2 &s, const Mat3 &cov);
 
-    Vec3 updateX(const Vec3 &est, const Eigen::Matrix<float,3,2> &kalman_gain_, const Point2f &residual);
+    Vec3 updateX(const Vec3 &est, const Eigen::Matrix<float,3,2> &kalman_gain_, const Vec2 &residual);
 
     Mat3 updateCov(const Eigen::Matrix<float,3,2> &kalman_gain, const Mat3 &cov);
 
-    Point2f obsModel(const Vec3 &linear_accel);
+    Vec2 obsModel(const Vec3 &linear_accel);
 }
 
 #endif

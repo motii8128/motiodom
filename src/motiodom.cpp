@@ -30,7 +30,7 @@ namespace motiodom
 
         has_prev_scan_ = false;
         rotation_ = Mat2::Identity();
-        translation_ = Point2f::Zero();
+        translation_ = Vec2::Zero();
 
         prev_cloud_ = PointCloud2f();
 
@@ -157,9 +157,9 @@ namespace motiodom
         {
             if(std::isfinite(range) && range >= scan.range_min && range <= scan.range_max && fabs(range) > near_lidar_threshold)
             {
-                Point2f p_lidar(range * cos(angle), range * sin(angle));
+                Vec2 p_lidar(range * cos(angle), range * sin(angle));
 
-                Point2f p_base = T * p_lidar;
+                Vec2 p_base = T * p_lidar;
                 points.emplace_back(p_base);
             }
             angle += scan.angle_increment;

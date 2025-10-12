@@ -2,7 +2,6 @@
 #define MOTIODOM_COMMON_HPP_
 
 #include <nanoflann.hpp>
-
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <Eigen/Dense>
@@ -10,11 +9,14 @@
 
 namespace motiodom
 {
-    using Point2f = Eigen::Vector2f;
-    using PointCloud2f = std::vector<Point2f, Eigen::aligned_allocator<Point2f>>;
+    using Vec2 = Eigen::Vector2f;
     using Mat2 = Eigen::Matrix2f;
+    using Mat3 = Eigen::Matrix3f;
+    using Vec3 = Eigen::Vector3f;
     using Mat8 = Eigen::Matrix<float, 8, 8>;
     using Vec8 = Eigen::Matrix<float, 8, 1>;
+
+    using PointCloud2f = std::vector<Vec2, Eigen::aligned_allocator<Vec2>>;
 
     struct PointCloudAdaptor {
         const PointCloud2f& pts;

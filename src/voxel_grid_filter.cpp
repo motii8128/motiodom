@@ -24,7 +24,7 @@ namespace motiodom
         for (const auto& kv : voxel_map)
         {
             const auto& pts = kv.second;
-            Point2f mean = Point2f::Zero();
+            Vec2 mean = Vec2::Zero();
             for (const auto& p : pts)
                 mean += p;
             mean /= static_cast<float>(pts.size());
