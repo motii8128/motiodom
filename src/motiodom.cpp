@@ -2,7 +2,7 @@
 
 namespace motiodom
 {
-    MotiOdom::MotiOdom(): Node("motiodom")
+    MotiOdom::MotiOdom(): Node("motiodom"),ekf_estimation_yaw_(0.0)
     {
         const int max_iter = this->declare_parameter("icp.max_iter", 50);
         const float tolerance_trans = this->declare_parameter("icp.translation_tolerance", 1e-4f);
@@ -73,6 +73,10 @@ namespace motiodom
                 return;
             }
 
+            const float estimated_yaw = ekf_estimation_yaw_.load(std::memory_order_relaxed);
+
+            rotation_ = Eigen::Rotation2Df(estimated_yaw).toRotationMatrix();
+
             auto result = icp_->align(prev_cloud_, current_cloud, rotation_, translation_);
 
             auto map_msg = eigen2cloud_msg(prev_cloud_);
@@ -136,7 +140,7 @@ namespace motiodom
 
         const auto est = imu_posture_estimater_->estimate(angular_velocity, linear_accel, dt);
 
-        rotation_ = Eigen::Rotation2Df(est.z() / 2.0).toRotationMatrix();
+        ekf_estimation_yaw_.store(est.z()/2.0, std::memory_order_relaxed);
 
         last_imu_time_ = current_time;
     }
@@ -198,9 +202,12 @@ int main(int argc, char* argv[])
 {
     rclcpp::init(argc, argv);
 
-    const auto node = std::make_shared<motiodom::MotiOdom>();
+    auto node = std::make_shared<motiodom::MotiOdom>();
 
-    rclcpp::spin(node);
+    rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 2);
+    
+    executor.add_node(node);
+    executor.spin();
 
     rclcpp::shutdown();
 

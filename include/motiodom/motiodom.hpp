@@ -13,6 +13,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <atomic>
 
 
 namespace motiodom
@@ -47,6 +48,10 @@ namespace motiodom
 
         Mat2 rotation_;
         Vec2 translation_;
+
+        std::atomic<float> ekf_estimation_yaw_;
+
+        rclcpp::CallbackGroup::SharedPtr callback_group_;
     };
 
     PointCloud2f scan_msg2eigen_points(const sensor_msgs::msg::LaserScan &scan, const geometry_msgs::msg::TransformStamped &tf_lidar_to_base, const float near_lidar_threshold);
