@@ -1,4 +1,4 @@
-#include "motiodom/posture_ekf.hpp"
+#include "motiodom/extended_kalman_filter.hpp"
 
 namespace motiodom
 {
