@@ -9,9 +9,9 @@ namespace motiodom
     observation_noise_(Mat2::Identity()),
     kalman_gain_(Eigen::Matrix<float, 3, 2>::Zero())
     {
-        cov_(0, 0) = 0.0174*0.001;
-        cov_(1, 1) = 0.0174*0.001;
-        cov_(2, 2) = 0.0174*0.001;
+        cov_(0, 0) = 0.01;
+        cov_(1, 1) = 0.01;
+        cov_(2, 2) = 0.01;
 
         estimation_noise_(0, 0) = 0.01;
         estimation_noise_(1, 1) = 0.01;
