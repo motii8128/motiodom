@@ -1,9 +1,10 @@
 /**:
   ros__parameters:
-    icp.max_iter: 50
+    icp.max_iter: 100
     icp.translation_tolerance: 0.0001
     icp.rotation_tolerance: 0.0001
     icp.max_corr_distance: 1.0
+    icp.voxel_grid_size: 0.02
 
     frame_id: "map"
     child_frame_id: "base_link"

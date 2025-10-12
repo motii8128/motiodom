@@ -21,7 +21,8 @@ namespace motiodom
         /// @param tolerance_trans 位置の収束閾値
         /// @param tolerance_rot 回転の収束閾値
         /// @param max_corr_dist 最近傍探索時の最長距離
-        ICP2D(int max_iter = 50, float tolerance_trans = 1e-4f, float tolerance_rot = 1e-4f, float max_corr_dist = 1.0f);
+        /// @param voxel_size ダウンサンプリング時のグリッドサイズ
+        ICP2D(int max_iter = 50, float tolerance_trans = 1e-4f, float tolerance_rot = 1e-4f, float max_corr_dist = 1.0f, float grid_size = 0.02f);
 
         /// @brief ICPによる点群の位置合わせを実行する
         /// @param map マップ点群
@@ -43,6 +44,7 @@ namespace motiodom
         float tolerance_trans_;
         float tolerance_rot_;
         float max_corr_dist_;
+        float voxel_grid_size_;
     };
 
     /// @brief 最近傍探索

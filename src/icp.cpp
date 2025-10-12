@@ -2,18 +2,19 @@
 
 namespace motiodom
 {
-    ICP2D::ICP2D(int max_iter, float tolerance_trans, float tolerance_rot, float max_corr_dist):
+    ICP2D::ICP2D(int max_iter, float tolerance_trans, float tolerance_rot, float max_corr_dist, float grid_size):
     max_iter_(max_iter),
     tolerance_trans_(tolerance_trans),
     tolerance_rot_(tolerance_rot),
-    max_corr_dist_(max_corr_dist)
+    max_corr_dist_(max_corr_dist),
+    voxel_grid_size_(grid_size)
     {
 
     }
 
     ICPResult ICP2D::align(PointCloud2f& map, const PointCloud2f& current, Mat2& R, Vec2& t)
     {
-        auto source = voxelGridFilter2D(current, 0.05);
+        auto source = voxelGridFilter2D(current, voxel_grid_size_);
         for(auto& p : source)
         {
             p = R * p + t;
@@ -81,7 +82,7 @@ namespace motiodom
         {
             PointCloud2f transformed = source;
             map.insert(map.end(), transformed.begin(), transformed.end());
-            map = voxelGridFilter2D(map, 0.05);
+            map = voxelGridFilter2D(map, voxel_grid_size_);
         }
 
         return result;

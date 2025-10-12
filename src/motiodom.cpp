@@ -8,6 +8,7 @@ namespace motiodom
         const float tolerance_trans = this->declare_parameter("icp.translation_tolerance", 1e-4f);
         const float tolerance_rot = this->declare_parameter("icp.rotation_tolerance", 1e-4f);
         const float max_corr_dist = this->declare_parameter("icp.max_corr_distance", 1.0f);
+        const float voxel_grid_size = this->declare_parameter("icp.voxel_grid_size", 0.02f);
 
         frame_id_ = this->declare_parameter("frame_id", "map");
         child_frame_id_ = this->declare_parameter("child_frame_id", "odom");
@@ -23,7 +24,7 @@ namespace motiodom
             tolerance_rot,
             max_corr_dist);
 
-        icp_ = std::make_shared<ICP2D>(max_iter, tolerance_trans, tolerance_rot, max_corr_dist);
+        icp_ = std::make_shared<ICP2D>(max_iter, tolerance_trans, tolerance_rot, max_corr_dist, voxel_grid_size);
 
         imu_posture_estimater_ = std::make_shared<ImuPostureEKF>();
 
@@ -43,7 +44,7 @@ namespace motiodom
         );
 
         imu_subscriber_ = this->create_subscription<sensor_msgs::msg::Imu>(
-            "/sensing/realsense/imu",
+            "/imu",
             rclcpp::SystemDefaultsQoS(),
             std::bind(&MotiOdom::imu_callback, this, _1)
         );
@@ -128,9 +129,9 @@ namespace motiodom
         );
 
         Vec3 angular_velocity(
-            msg->angular_velocity.x,
-            msg->angular_velocity.y,
-            msg->angular_velocity.z
+            msg->angular_velocity.x * (M_PI / 180.0),
+            msg->angular_velocity.y * (M_PI / 180.0),
+            msg->angular_velocity.z * (M_PI / 180.0)
         );
 
         const auto est = imu_posture_estimater_->estimate(angular_velocity, linear_accel, dt);
