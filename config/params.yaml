@@ -7,6 +7,5 @@
 
     frame_id: "map"
     child_frame_id: "base_link"
-    lidar_frame_id: "lidar"
 
     near_lidar_threshold: 0.5
