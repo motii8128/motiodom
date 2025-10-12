@@ -35,7 +35,7 @@ namespace motiodom
 
         rclcpp::Time last_imu_time_;
 
-        std::string frame_id_, child_frame_id_, lidar_frame_id_;
+        std::string frame_id_, child_frame_id_;
 
         PointCloud2f prev_cloud_;
         std::shared_ptr<ICP2D> icp_;

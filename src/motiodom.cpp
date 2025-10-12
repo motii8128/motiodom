@@ -11,7 +11,6 @@ namespace motiodom
 
         frame_id_ = this->declare_parameter("frame_id", "map");
         child_frame_id_ = this->declare_parameter("child_frame_id", "odom");
-        lidar_frame_id_ = this->declare_parameter("lidar_frame_id", "lidar");
 
         near_lidar_threshold_ = this->declare_parameter("near_lidar_threshold", 0.01);
 
@@ -57,10 +56,12 @@ namespace motiodom
 
     void MotiOdom::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
+        const auto lidar_frame_id = msg->header.frame_id;
+
         auto t = geometry_msgs::msg::TransformStamped();
         try
         {
-            t = tf_buffer_->lookupTransform(child_frame_id_, lidar_frame_id_ ,tf2::TimePointZero);
+            t = tf_buffer_->lookupTransform(child_frame_id_, lidar_frame_id, tf2::TimePointZero);
 
             auto current_cloud = scan_msg2eigen_points(*msg, t, near_lidar_threshold_);
 
@@ -78,7 +79,14 @@ namespace motiodom
             map_msg.header.stamp = this->get_clock()->now();
             pointcloud_publisher_->publish(map_msg);
 
-            RCLCPP_INFO(this->get_logger(), "ICP-Result  has_covered:%d, iter:%d", result.has_covered, result.iter);
+            if(result.has_covered)
+            {
+                RCLCPP_INFO(this->get_logger(), "ICP is has converged. iter:%d", result.iter);
+            }
+            else
+            {
+                RCLCPP_ERROR(this->get_logger(),"ICP did not converge...");
+            }
 
             geometry_msgs::msg::TransformStamped t;
 
@@ -100,7 +108,7 @@ namespace motiodom
         }
         catch(tf2::TransformException& ex)
         {
-            RCLCPP_WARN(this->get_logger(), "Could not transform %s->%s: %s",child_frame_id_.c_str(), lidar_frame_id_.c_str(), ex.what());
+            RCLCPP_ERROR(this->get_logger(), "Could not transform %s->%s: %s",child_frame_id_.c_str(), lidar_frame_id.c_str(), ex.what());
         }
         
         
@@ -128,8 +136,6 @@ namespace motiodom
         const auto est = imu_posture_estimater_->estimate(angular_velocity, linear_accel, dt);
 
         rotation_ = Eigen::Rotation2Df(est.z() / 2.0).toRotationMatrix();
-
-        RCLCPP_INFO(this->get_logger(), "x:%lf,y:%lf,z:%lf", est.x(),est.y(),est.z()/2.0);
 
         last_imu_time_ = current_time;
     }
