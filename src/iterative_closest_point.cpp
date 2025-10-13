@@ -1,4 +1,4 @@
-#include "motiodom/icp.hpp"
+#include "motiodom/iterative_closest_point.hpp"
 
 namespace motiodom
 {

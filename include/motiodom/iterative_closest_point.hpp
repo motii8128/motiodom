@@ -12,7 +12,7 @@ namespace motiodom
         bool has_covered;
         int iter;
     };
-    /// @brief ２次元InteractiveClosestPointを実装したクラス
+    /// @brief ２次元IterativeClosestPointを実装したクラス
     class ICP2D
     {
         public:
