@@ -41,6 +41,7 @@ namespace motiodom
         PointCloud2f prev_cloud_;
         std::shared_ptr<ICP2D> icp_;
         bool has_prev_scan_;
+        bool imu_received_;
 
         float near_lidar_threshold_;
 

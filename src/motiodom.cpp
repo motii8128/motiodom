@@ -29,6 +29,7 @@ namespace motiodom
         imu_posture_estimater_ = std::make_shared<ImuPostureEKF>();
 
         has_prev_scan_ = false;
+        imu_received_ = false;
         rotation_ = Mat2::Identity();
         translation_ = Vec2::Zero();
 
@@ -75,7 +76,10 @@ namespace motiodom
 
             const float estimated_yaw = ekf_estimation_yaw_.load(std::memory_order_relaxed);
 
-            rotation_ = Eigen::Rotation2Df(estimated_yaw).toRotationMatrix();
+            if(imu_received_)
+            {
+                rotation_ = Eigen::Rotation2Df(estimated_yaw).toRotationMatrix();
+            }
 
             auto result = icp_->align(prev_cloud_, current_cloud, rotation_, translation_);
 
@@ -121,6 +125,8 @@ namespace motiodom
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
+        if(!imu_received_)imu_received_ = true;
+
         const auto current_time = this->get_clock()->now();
         const auto duration = current_time - last_imu_time_;
 
