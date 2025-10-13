@@ -33,6 +33,4 @@ end
 
 Posture ==> |Initial Estimation|ICP
 
-UKFU ==> |Bias Estimation|EKF
-
 ```
