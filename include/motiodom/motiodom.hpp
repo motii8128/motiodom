@@ -2,8 +2,9 @@
 #define MOTIODOM_HPP_
 
 #include "common.hpp"
-#include "icp.hpp"
+#include "iterative_closest_point.hpp"
 #include "extended_kalman_filter.hpp"
+#include "unscented_kalman_filter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -42,6 +43,7 @@ namespace motiodom
         std::shared_ptr<ICP2D> icp_;
         bool has_prev_scan_;
         bool imu_received_;
+        bool is_degree_imu_;
 
         float near_lidar_threshold_;
 

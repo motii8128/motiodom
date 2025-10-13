@@ -13,7 +13,9 @@ namespace motiodom
         frame_id_ = this->declare_parameter("frame_id", "map");
         child_frame_id_ = this->declare_parameter("child_frame_id", "odom");
 
-        near_lidar_threshold_ = this->declare_parameter("near_lidar_threshold", 0.01);
+        near_lidar_threshold_ = this->declare_parameter("near_lidar_threshold", 0.01f);
+
+        is_degree_imu_ = this->declare_parameter("ekf.is_degree_imu", true);
 
         tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
         tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
@@ -139,10 +141,15 @@ namespace motiodom
         );
 
         Vec3 angular_velocity(
-            msg->angular_velocity.x * (M_PI / 180.0),
-            msg->angular_velocity.y * (M_PI / 180.0),
-            msg->angular_velocity.z * (M_PI / 180.0)
+            msg->angular_velocity.x,
+            msg->angular_velocity.y,
+            msg->angular_velocity.z
         );
+
+        if(is_degree_imu_)
+        {
+            angular_velocity *= (M_PI / 180.0);
+        }
 
         const auto est = imu_posture_estimater_->estimate(angular_velocity, linear_accel, dt);
 
