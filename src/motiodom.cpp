@@ -127,7 +127,11 @@ namespace motiodom
 
     void MotiOdom::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
     {
-        if(!imu_received_)imu_received_ = true;
+        if(!imu_received_)
+        {
+            imu_received_ = true;
+            RCLCPP_INFO(this->get_logger(), "Get IMU ...");
+        }
 
         const auto current_time = this->get_clock()->now();
         const auto duration = current_time - last_imu_time_;
