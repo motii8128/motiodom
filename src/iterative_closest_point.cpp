@@ -20,6 +20,10 @@ namespace motiodom
             p = R * p + t;
         }
 
+        auto t_of_start = t;
+        auto R_of_start = R;
+
+
         // KDTree構築
         PointCloudAdaptor target_adaptor(map);
         KDTree kdtree(2, target_adaptor, nanoflann::KDTreeSingleIndexAdaptorParams(10));
@@ -80,9 +84,16 @@ namespace motiodom
 
         if(has_cov)
         {
-            PointCloud2f transformed = source;
-            map.insert(map.end(), transformed.begin(), transformed.end());
-            map = voxelGridFilter2D(map, voxel_grid_size_);
+            const auto delta_translation = (t - t_of_start).norm();
+            const Mat2 R_rel = R * R_of_start.transpose();    
+            const auto diff_angle = std::fabs(std::atan2(R_rel(1,0), R_rel(0,0)));        
+
+            if(delta_translation > 0.009 || diff_angle > 0.001)
+            {
+                PointCloud2f transformed = source;
+                map.insert(map.end(), transformed.begin(), transformed.end());
+                map = voxelGridFilter2D(map, voxel_grid_size_);
+            }
         }
 
         return result;
