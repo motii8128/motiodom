@@ -1,0 +1,9 @@
+<launch>
+    <!-- <include file="$(find-pkg-share urg_node2)/launch/urg_node2.launch.py"/> -->
+    <include file="$(find-pkg-share ydlidar_ros2_driver)/launch/ydlidar_launch.py"/>
+    <include file="$(find-pkg-share motiodom)/launch/motiodom.launch.py"/>
+    <include file="$(find-pkg-share haya_imu_ros2)/launch/haya_imu_launch.py"/>
+    <!-- 850 * 980 -->
+    <!-- <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tf_base_to_camera" output="screen" args="0.46 0.0 0.3005 0.0 0.0 0.0 base_link realsense_link"/> -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="static_tf_base_to_lidar" output="screen" args="0.0 0.0 0.0 0.0 0.0 0.0 base_link lidar"/>
+</launch>

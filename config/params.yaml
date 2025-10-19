@@ -4,7 +4,7 @@
     icp.translation_tolerance: 0.001
     icp.rotation_tolerance: 0.001
     icp.max_corr_distance: 0.1
-    icp.voxel_grid_size: 0.03
+    icp.voxel_grid_size: 0.001
 
     ekf.is_degree_imu: true
 
